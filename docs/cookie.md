@@ -1,5 +1,3 @@
-
-
 # 在Paimon中添加Cookie
 
 在`koishi-plugin-paimon`中添加Cookie可以获得完整的体验，从获取米游社的小饼干开始。
