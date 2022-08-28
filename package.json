@@ -29,6 +29,9 @@
     "pub:next": "npm publish --tag next"
   },
   "koishi": {
+    "description": {
+      "zh": "用于Koishi的某动漫游戏插件"
+    },
     "service": {
       "required": [
         "database"
