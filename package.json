@@ -1,0 +1,52 @@
+{
+  "name": "koishi-plugin-paimon",
+  "version": "0.0.0-beta0",
+  "description": "A koishi plugin for a certain anime game.",
+  "main": "dist/koishi-plugin-paimon.cjs.js",
+  "module": "dist/koishi-plugin-paimon.esm.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
+  "author": "Lipraty <i@lonay.me>",
+  "license": "MIT",
+  "keywords": [
+    "genshin",
+    "genshin-impact",
+    "genshin-api",
+    "hoyolab",
+    "koishi",
+    "mihoyo"
+  ],
+  "scripts": {
+    "build": "rollpkg build",
+    "dev": "rollpkg watch",
+    "bump": "",
+    "pub:stable": "npm publish --tag latest",
+    "pub:next": "npm publish --tag next"
+  },
+  "koishi": {
+    "service": {
+      "required": [
+        "database"
+      ],
+      "implements": [
+        "paimon"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "koishi": "^4.8.6"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-typescript": "^8.4.0",
+    "@rollup/plugin-yaml": "^3.1.0",
+    "@types/node": "^18.7.13",
+    "koishi": "^4.8.6",
+    "rollpkg": "^0.5.7",
+    "rollup": "^2.78.1",
+    "rollup-plugin-serve": "^2.0.1",
+    "typescript": "^4.8.2"
+  }
+}
