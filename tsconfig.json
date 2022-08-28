@@ -1,26 +1,17 @@
 {
-    "compilerOptions": {
-        "baseUrl": ".",
-        "rootDir": "src",
-        "module": "ESNext",
-        "allowJs": true,
-        "composite": true,
-        "declaration": true,
-        "incremental": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "moduleResolution": "node",
-        "strictBindCallApply": true,
-        "paths": {
-            "koishi-plugin-paimon": [
-                "src"
-            ],
-        }
-    },
-    "exclude": [
-        "node_modules"
-    ],
-    "include": [
-        "src/**/*"
-    ]
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib",
+    "target": "es2020",
+    "module": "commonjs",
+    "declaration": true,
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src"
+  ]
 }
