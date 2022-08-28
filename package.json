@@ -1,33 +1,29 @@
 {
   "name": "koishi-plugin-paimon",
-  "version": "0.0.0-beta1",
   "description": "A koishi plugin for a certain anime game.",
-  "main": "dist/koishi-plugin-paimon.cjs.js",
-  "module": "dist/koishi-plugin-paimon.esm.js",
-  "types": "dist/index.d.ts",
-  "sideEffects": false,
+  "private": false,
+  "version": "0.0.0-beta1",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
   "author": "Lipraty <i@lonay.me>",
-  "license": "MIT",
   "files": [
+    "lib",
     "dist"
   ],
+  "license": "MIT",
+  "scripts": {},
   "keywords": [
+    "koishi",
+    "chatbot",
+    "plugin",
+    "market:hidden",
+    "mihoyo",
+    "hoyolab",
     "genshin",
     "genshin-impact",
-    "genshin-api",
-    "hoyolab",
-    "koishi",
-    "market:hidden",
-    "mihoyo"
+    "genshin-api"
   ],
-  "scripts": {
-    "build": "rollpkg build",
-    "dev": "rollpkg watch",
-    "bump": "",
-    "pub:stable": "npm publish --tag latest",
-    "pub:next": "npm publish --tag next"
-  },
   "koishi": {
     "description": {
       "zh": "用于Koishi的某动漫游戏插件"
@@ -43,18 +39,5 @@
   },
   "peerDependencies": {
     "koishi": "^4.8.6"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^22.0.2",
-    "@rollup/plugin-node-resolve": "^13.3.0",
-    "@rollup/plugin-typescript": "^8.4.0",
-    "@rollup/plugin-yaml": "^3.1.0",
-    "@types/node": "^18.7.13",
-    "koishi": "^4.8.6",
-    "rollpkg": "^0.5.7",
-    "rollup": "^2.78.1",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-serve": "^2.0.1",
-    "typescript": "^4.8.2"
   }
 }

@@ -1,6 +1,8 @@
 # koishi-plugin-paimon
 
-用于某动漫游戏的koishi插件
+[![npm](https://img.shields.io/npm/v/koishi-plugin-paimon?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-paimon)
+
+A koishi plugin for a certain anime game.
 
 ## 安装
 
