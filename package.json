@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-paimon",
-  "version": "0.0.0-beta0",
+  "version": "0.0.0-beta1",
   "description": "A koishi plugin for a certain anime game.",
   "main": "dist/koishi-plugin-paimon.cjs.js",
   "module": "dist/koishi-plugin-paimon.esm.js",
