@@ -15,6 +15,7 @@
     "genshin-api",
     "hoyolab",
     "koishi",
+    "market:hidden",
     "mihoyo"
   ],
   "scripts": {
