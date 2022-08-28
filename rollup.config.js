@@ -1,5 +1,7 @@
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-commonjs'
+import commonjs from '@rollup/plugin-commonjs'
+
 
 export default {
     input: './src/index.ts',
@@ -9,6 +11,8 @@ export default {
         sourcemap: true
     },
     plugins: [
-        typescript()
-    ],
+        typescript(),
+        resolve(),
+        commonjs(),
+    ]
 }
