@@ -2,7 +2,7 @@
   "name": "koishi-plugin-paimon",
   "description": "A koishi plugin for a certain anime game.",
   "private": false,
-  "version": "0.0.0-beta1",
+  "version": "0.0.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
@@ -12,7 +12,13 @@
     "dist"
   ],
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build": "yakumo build",
+    "bump": "yakumo bump",
+    "pub": "yakumo publish",
+    "koishi": "koishi start",
+    "koishi:dev": "cross-env NODE_ENV=development koishi start -r esbuild-register -r yml-register --watch"
+  },
   "keywords": [
     "koishi",
     "chatbot",
@@ -38,6 +44,7 @@
     }
   },
   "peerDependencies": {
-    "koishi": "^4.8.6"
+    "koishi": "^4.8.6",
+    "koishi-plugin-puppeteer": "^3.0.2"
   }
 }

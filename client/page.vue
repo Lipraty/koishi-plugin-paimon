@@ -1,3 +1,5 @@
 <template>
-  <k-layout>扩展内容</k-layout>
+  <k-layout>
+    
+  </k-layout>
 </template>
