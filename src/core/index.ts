@@ -33,16 +33,21 @@ export class Paimon {
     public get pptr() { return this._pptr }
     public set pptr(V) { this._pptr = V }
     /**
+     * Koishi上下文
+     */
+    public get context(): Context { return this.ctx }
+    /**
      * 创建Paimon监听对象
      */
-    public create(commandModules: Array<basicCommand>) {
+    public create(commandModules: any) {
         const koishiCmd = this.ctx.command('paimon [uid:number]', '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys').example('paimon --uid 0000 绑定UID')
         if (commandModules) {
             let N = commandModules.length
             //注册所有可用的命令
-            commandModules.forEach(command => {
+            commandModules.forEach((command: { new(): basicCommand; cmd: new () => any; }) => {
                 try {
-                    cmdBootstrap(this, koishiCmd, command)
+                    if(new command().cmd)
+                        cmdBootstrap(this, koishiCmd, new command)
                 } catch (error) {
                     this.logger.error(error)
                     N--

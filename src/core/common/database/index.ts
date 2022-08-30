@@ -17,17 +17,17 @@ export interface PaimonDB {
 }
 
 export function extend(ctx: Context) {
-    ctx.model.extend('paimon', {
-        // 各字段类型
-        id: 'unsigned',
-        assignee: 'string',
-        time: 'timestamp',
-        lastCall: 'timestamp',
-        interval: 'integer',
-        command: 'text',
-        session: 'json',
-    }, {
-        autoInc: true,
+    // ctx.model.extend('paimon', {
+    //     // 各字段类型
+    //     id: 'unsigned',
+    //     assignee: 'string',
+    //     time: 'timestamp',
+    //     lastCall: 'timestamp',
+    //     interval: 'integer',
+    //     command: 'text',
+    //     session: 'json',
+    // }, {
+    //     autoInc: true,
         
-    })
+    // })
 }
