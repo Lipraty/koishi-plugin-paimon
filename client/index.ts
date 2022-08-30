@@ -3,8 +3,8 @@ import Page from './page.vue'
 
 export default (ctx: Context) => {
   ctx.page({
-    name: '扩展页面',
-    path: '/custom-page',
+    name: 'Paimon',
+    path: '/paimon',
     component: Page,
   })
 }
