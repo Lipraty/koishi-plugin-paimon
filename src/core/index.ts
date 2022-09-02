@@ -1,65 +1,69 @@
 import { basicCommand, cmdBootstrap, ICommand } from "./command";
-import { Command, Context, DatabaseService, koishiConfig, Logger } from "./common";
+import { Command, Context, DatabaseService, koishiConfig, Logger, PaimonDB, PaimonDBExtend } from "./common";
 export * from './common'
+declare module 'koishi' {
+    interface Tables {
+        paimon: PaimonDB
+    }
+}
 
 export class Paimon {
     private ctx: Context
     private cfg: koishiConfig
-    private _database: DatabaseService
-    private _pptr
-    private static _srv: Record<string, any>
+    private _db: DatabaseService
     private logger = new Logger('paimom')
     private startDate: number
-
-    constructor(ctx: Context, config: koishiConfig) {
-        this.startDate = performance.now()
-        //注册Context到Paimon
-        this.ctx = ctx
-        //注册Config到Paimon
-        this.cfg = config
-        //注册`paomon`数据库模型
-
-        //注册数据库ORM到Paimon
-        this._database = ctx.database
-    }
-    /**
-     * 基于Koishi的数据库能力
-     */
-    public get database(): DatabaseService { return this._database }
-    public set database(V: DatabaseService) { this._database = V }
     /**
      * 
+     * @param context 
+     * @param config 
      */
-    public get pptr() { return this._pptr }
-    public set pptr(V) { this._pptr = V }
-    /**
-     * Koishi上下文
-     */
+    constructor(context: Context, config: koishiConfig) {
+        this.startDate = performance.now()
+        this.ctx = context
+        this.cfg = config
+        //注册`paomon`数据库模型
+        context.model.extend('paimon', PaimonDBExtend.fields, PaimonDBExtend.option)
+        this._db = context.database
+
+    }
+
+    private createBasicCommand(){
+        return this.ctx.command('paimon [uid:string]', '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys')
+    }
+
+    public get database(): DatabaseService { return this._db }
+
     public get context(): Context { return this.ctx }
+
+    public get config() { return this.cfg }
     /**
-     * 创建Paimon监听对象
+     * 创建Paimon命令对象
      */
-    public create(commandModules: any) {
-        const koishiCmd = this.ctx.command('paimon [uid:number]', '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys').example('paimon --uid 0000 绑定UID')
+    public create(commandModules: Array<any>) {
+        //Use koishi command
+        const koishiCmd = this.createBasicCommand()
+        //Use subcommand
         if (commandModules) {
             let N = commandModules.length
-            //注册所有可用的命令
-            commandModules.forEach((command: { new(): basicCommand; cmd: new () => any; }) => {
+            commandModules.forEach((command: { new(): basicCommand }) => {
                 try {
-                    if(new command().cmd)
+                    if (new command().cmd) {
                         cmdBootstrap(this, koishiCmd, new command)
+                    } else {
+                        N--
+                    }
                 } catch (error) {
-                    this.logger.error(error)
                     N--
                 }
             })
-            this.logger.info('started! installed', N, 'commands, takes', (performance.now() - this.startDate), 'ms')
+            this.logger.info('started! installed', N, 'subcommands, takes', (performance.now() - this.startDate), 'ms')
         } else {
             this.logger.error('install modules fail.')
         }
     }
 
-    public use(service: any) {
+    public use(service: PropertyDescriptorMap & ThisType<any>) {
         //注入service到Paimon实例
         Object.defineProperties(Paimon.prototype, service)
     }

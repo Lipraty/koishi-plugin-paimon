@@ -1,10 +1,4 @@
-import { Context, Session } from "..";
-
-declare module 'koishi' {
-    interface Tabals {
-        paimon: PaimonDB
-    }
-}
+import { Field } from ".."
 
 export interface PaimonDB {
     id: number
@@ -13,21 +7,19 @@ export interface PaimonDB {
     lastCall: Date
     interval: number
     command: string
-    session: Session.Payload
+
 }
 
-export function extend(ctx: Context) {
-    // ctx.model.extend('paimon', {
-    //     // 各字段类型
-    //     id: 'unsigned',
-    //     assignee: 'string',
-    //     time: 'timestamp',
-    //     lastCall: 'timestamp',
-    //     interval: 'integer',
-    //     command: 'text',
-    //     session: 'json',
-    // }, {
-    //     autoInc: true,
-        
-    // })
+export class PaimonDBExtend {
+    public static fields: Field.MapField<PaimonDB> = {
+        id: 'unsigned',
+        assignee: 'string',
+        time: 'timestamp',
+        lastCall: 'timestamp',
+        interval: 'integer',
+        command: 'text'
+    }
+    public static option = {
+        autoInc: true
+    }
 }

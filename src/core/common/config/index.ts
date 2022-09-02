@@ -1,4 +1,4 @@
-import { Schema } from "koishi"
+import { Schema } from ".."
 
 interface characterOptions {
     panelApi: any

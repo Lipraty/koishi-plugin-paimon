@@ -17,20 +17,21 @@ export declare class ICommand implements CommandOptions {
 
 export class basicCommand implements ICommand {
     public readonly cmd: string = undefined
+    public readonly opt: string = undefined
     public readonly desc: string = undefined
     public readonly alias: string = undefined
     public readonly param: string = undefined
     public readonly level: 0 | 1 = 0
     public readonly option: Argv.OptionConfig = undefined
-    public database: DatabaseService = undefined
     public setup(paimon: Paimon, options: object, session: Session): void { }
 }
 
-export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand) {
+export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand, option: boolean = false) {
+    // koishiCmd.subcommand('.testxxx [opt:string] test').alias('.tx')
     //install option
     koishiCmd = koishiCmd.option(command.cmd, [command.alias, command.param, command.desc].join(' '))
     //
     koishiCmd.action(({ options, session }) => {
-        return command.setup(paimon, options, session)
+        return JSON.stringify({options, session})
     })
 }
