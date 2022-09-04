@@ -1,6 +1,7 @@
 import { Paimon } from "../core";
+import { basicCommand } from "../core/command";
 
-export default class useBind {
+export default class useBind extends basicCommand {
     public cmd = 'bind'
     public param = '[param]'
     public alias = 'b'
@@ -9,7 +10,7 @@ export default class useBind {
         uid: '-u [uid:string] 绑定UID',
         cookie: '-c [cookie:string] 绑定cookie'
     }
-    public setup(paimon: Paimon) {
+    public setup(paimon: Paimon, session) {
         //...
     }
 }

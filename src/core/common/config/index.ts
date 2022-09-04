@@ -1,4 +1,5 @@
 import { Schema } from ".."
+import { UUID } from "../../../utils/UUID.util"
 
 interface characterOptions {
     panelApi: any
@@ -7,8 +8,9 @@ interface characterOptions {
 
 export interface koishiConfig {
     master: number
-    cookie: string[]
+    cookies: string[]
     cookieDesc: string
+    cookieKey: string
     commandBans: string[]
     gachaCount: number
     gachaRevock: number
@@ -19,9 +21,10 @@ export interface koishiConfig {
 
 export const koishiCOnfig: Schema<koishiConfig> = Schema.object({
     master: Schema.number().min(0).max(3).default(3).description('高级命令响应级别'),
-    cookie: Schema.array(String).default([]).description('用于公共查询的米游社小饼干，可以为多个'),
+    cookies: Schema.array(String).default([]).description('用于公共查询的米游社小饼干，可以为多个'),
+    cookieKey: Schema.string().description('应该为这些小饼干整一个带锁的盒子，默认随机生成，可以自行更改'),
     cookieDesc: Schema.string().description('小饼干绑定帮助文档地址，GitHub可能访问不稳定，可以替换为其他地址').default("https://github.com/Lipraty/koishi-plugin-paimon/wiki/Bind-Cookie"),
-    commandBans: Schema.array(String).default(["gacha"]).description('禁止使用的命令列表'),
+    commandBans: Schema.array(String).default(["gacha"]).description('不应该使用这些命令'),
     gachaCount: Schema.number().min(1).max(5).default(1).description('单用户每日抽卡次数'),
     gachaRevock: Schema.number().min(30).max(120).default(null).description('抽卡后撤回消息（30-120s，默认值时不撤回）'),
     pushTime: Schema.string().default("0 0 0/5 * * * ?").description('米游社资讯推送时间'),
