@@ -1,8 +1,6 @@
 import { Paimon } from ".."
-import { Command, Logger } from "../common"
+import { Command } from "../common"
 import { modulesContext as context } from "./context"
-
-const logger = new Logger('cmdInstaller')
 
 export const modules = {
     context
@@ -50,7 +48,7 @@ export class basicCommand implements ICommand {
 export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand) {
     if (!command.opt) {
         //install subcommand
-        koishiCmd = koishiCmd.subcommand(`.${command.cmd}`, command.desc).alias(`.${command.alias}`)
+        koishiCmd = koishiCmd.subcommand(`.${command.cmd}`, command.desc).alias(`${paimon.commandName}.${command.alias}`)
         // install subcommand's options
         if (command.options) {
             Object.keys(command.options).forEach(key => {

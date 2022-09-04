@@ -1,4 +1,4 @@
-import test from "node:test"
+// import test from "node:test"
 import abyss from "./abyss"
 import useBind from "./bind"
 import character from "./character"
@@ -9,4 +9,4 @@ import reset from "./reset"
 import sign from "./sign"
 import user from "./user"
 
-export default [user, sign, notes, memo, reset, abyss, character, gacha, useBind, test]
+export default [user, sign, notes, memo, reset, abyss, character, gacha, useBind]

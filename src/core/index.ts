@@ -15,23 +15,24 @@ declare module 'koishi' {
 }
 
 export class Paimon {
-    private ctx: Context
-    private cfg: koishiConfig
-    private _db: DatabaseService
-    private logger = new Logger('paimom')
-    private startDate: number
+    private __startTime: number
+    public context: Context
+    public config: koishiConfig
+    public database: DatabaseService
+    public readonly logger = new Logger('paimom')
+    public readonly commandName = 'paimon'
     /**
      * 
      * @param context 
      * @param config 
      */
     constructor(context: Context, config: koishiConfig) {
-        this.startDate = performance.now()
-        this.ctx = context
-        this.cfg = config
+        this.__startTime = performance.now()
+        this.context = context
+        this.config = config
         //注册`paomon`数据库模型
         context.model.extend('paimon', PaimonDBExtend.fields, PaimonDBExtend.option)
-        this._db = context.database
+        this.database = context.database
 
         if(!config.cookieKey){
             const CKKey = UUID.randomUUID().unsign()
@@ -45,14 +46,8 @@ export class Paimon {
     }
 
     private createBasicCommand(){
-        return this.ctx.command('paimon', '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys')
+        return this.context.command(this.commandName, '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys')
     }
-
-    public get database(): DatabaseService { return this._db }
-
-    public get context(): Context { return this.ctx }
-
-    public get config() { return this.cfg }
 
     /**
      * Load webpages with Puppeteer and render to images
@@ -82,7 +77,7 @@ export class Paimon {
                     N--
                 }
             })
-            this.logger.info('started! installed', N, 'subcommands and options, takes', (performance.now() - this.startDate), 'ms')
+            this.logger.info('started! installed', N, 'subcommands and options, takes', (performance.now() - this.__startTime), 'ms')
         } else {
             this.logger.error('install modules fail.')
         }

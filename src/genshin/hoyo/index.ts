@@ -1,5 +1,6 @@
-enum serverType {
-    CN = 'china',
+enum ServerType {
+    CN = 'cn_gf01',
+    CNB = 'cn_qd01',
     CHM = 'hokongmacao',
     EU = 'europe',
     AS = 'asia',
@@ -9,7 +10,7 @@ enum serverType {
 export class HoyoAPI {
     private cookie: string
     private uid: string
-    private server: string = 'cn'
+    private stype: ServerType = ServerType.CN
 
     constructor(uid: string, cookie?: string) {
         this.uid = uid
@@ -17,21 +18,38 @@ export class HoyoAPI {
 
     }
 
-    private getServerType(): serverType {
-        const UT = this.uid.slice(0, 1)
+    /**
+     * 获取该UID所处服务器区域。
+     * @returns 
+     */
+    private getServerType(): ServerType {
+        const UT = parseInt(this.uid[0]) 
         switch (UT) {
-            case '1' || '2' || '5':
-                return serverType.CN
-            case '6':
-                return serverType.US
-            case '7':
-                return serverType.EU
-            case '8':
-                return serverType.AS
-            case '9':
-                return serverType.CHM
+            case 1 || 2 || 3 || 4:
+                return ServerType.CN
+            case 5:
+                return ServerType.CNB
+            case 6:
+                return ServerType.US
+            case 7:
+                return ServerType.EU
+            case 8:
+                return ServerType.AS
+            case 9:
+                return ServerType.CHM
             default:
                 return undefined
         }
+    }
+
+    private async fetchAPI(apiName: string, url: string | URL, params: Record<string, any>){
+
+    }
+
+    /**
+     * 米游社签到
+     */
+    public async sign(paramOptions: Record<string, string>){
+        
     }
 }
