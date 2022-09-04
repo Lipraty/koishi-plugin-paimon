@@ -1,37 +1,68 @@
 import { Paimon } from ".."
-import { Argv, Command, Context, DatabaseService, Session } from "../common"
+import { Command, Logger } from "../common"
 import { modulesContext as context } from "./context"
+
+const logger = new Logger('cmdInstaller')
 
 export const modules = {
     context
 }
-
+/**
+ * command基础实现
+ */
 export declare class ICommand implements CommandOptions {
     public readonly cmd: string
+    public readonly opt: boolean
     public readonly desc: string
     public readonly param: string
     public readonly level: number
     public readonly alias: string
-    public setup(paimon: Paimon, options: any, session: any): string | void
+    public readonly maxUsage: number
+    public readonly shortcut: string
+    public readonly private: boolean
+    public readonly options: object
+    public setup(paimon: Paimon, options, session, next?): string | void
 }
 
+/**
+ * 提供基础command模板，并预决定返回值。
+ */
 export class basicCommand implements ICommand {
-    public readonly cmd: string = undefined
-    public readonly opt: string = undefined
-    public readonly desc: string = undefined
-    public readonly alias: string = undefined
-    public readonly param: string = undefined
-    public readonly level: 0 | 1 = 0
-    public readonly option: Argv.OptionConfig = undefined
-    public setup(paimon: Paimon, options: object, session: Session): void { }
+    public cmd: string = undefined
+    public opt: boolean = false
+    public desc: string = undefined
+    public param: string = undefined
+    public level: number = 0
+    public alias: string = undefined
+    public maxUsage: number = 0
+    public shortcut: string = undefined
+    public private: boolean = false
+    public options: object
+    public setup(paimon: Paimon, options, session, next?): string | void { return '该命令或选项可能未实现' }
 }
 
-export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand, option: boolean = false) {
-    // koishiCmd.subcommand('.testxxx [opt:string] test').alias('.tx')
-    //install option
-    koishiCmd = koishiCmd.option(command.cmd, [command.alias, command.param, command.desc].join(' '))
+/**
+ * command/option装载器
+ * @param paimon `Paimon`实例
+ * @param koishiCmd koishi.command
+ * @param command command module
+ */
+export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand) {
+    if (!command.opt) {
+        //install subcommand
+        koishiCmd = koishiCmd.subcommand(`.${command.cmd}`, command.desc).alias(`.${command.alias}`)
+        // install subcommand's options
+        if (command.options) {
+            Object.keys(command.options).forEach(key => {
+                koishiCmd.option(key, command.options[key])
+            })
+        }
+    } else {
+        //install option
+        koishiCmd = koishiCmd.option(command.cmd, [command.alias, command.param, command.desc].join(' '))
+    }
     //
-    koishiCmd.action(({ options, session }) => {
-        return JSON.stringify({options, session})
+    koishiCmd.action(({ options, session, next }) => {
+        return JSON.stringify({ options, session })
     })
 }
