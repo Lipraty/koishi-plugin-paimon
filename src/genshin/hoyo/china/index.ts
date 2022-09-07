@@ -1,10 +1,10 @@
 export const ChinaAPI: BasicAPI = {
-    baseURL: new URL('https://api-takumi.mihoyo.com/'),
+    takumiURL: new URL('https://api-takumi.mihoyo.com/'),
     hk4eURL: new URL('https://hk4e-api.mihoyo.com'),
     recordURL: new URL('https://api-takumi-record.mihoyo.com/'),
     apis: {
         sign: {
-            type: 'base',
+            type: 'takumi',
             module: 'POST',
             url: '/event/bbs_sign_reward/sign',
             params: ['act_id', 'region', 'uid'],

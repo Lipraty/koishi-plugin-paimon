@@ -5,7 +5,7 @@ import { ChinaAPI } from "../china";
  * 其他区服则使用另外的API URLs
  */
 export const BiliAPI: BasicAPI = {
-    baseURL: ChinaAPI.baseURL,
+    takumiURL: ChinaAPI.takumiURL,
     hk4eURL: ChinaAPI.hk4eURL,
     recordURL: ChinaAPI.recordURL,
     apis: ChinaAPI.apis

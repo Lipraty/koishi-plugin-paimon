@@ -1,10 +1,10 @@
-enum ServerType {
+export enum ServerType {
     CN = 'cn_gf01',
     CNB = 'cn_qd01',
-    CHM = 'hokongmacao',
-    EU = 'europe',
-    AS = 'asia',
-    US = 'unitedstates'
+    CHT = 'os_cht',
+    EU = 'os_euro',
+    AS = 'os_asia',
+    US = 'os_usa'
 }
 
 export class HoyoAPI {
@@ -25,7 +25,7 @@ export class HoyoAPI {
     private getServerType(): ServerType {
         const UT = parseInt(this.uid[0]) 
         switch (UT) {
-            case 1 || 2 || 3 || 4:
+            case 1 || 2:
                 return ServerType.CN
             case 5:
                 return ServerType.CNB
@@ -36,7 +36,7 @@ export class HoyoAPI {
             case 8:
                 return ServerType.AS
             case 9:
-                return ServerType.CHM
+                return ServerType.CHT
             default:
                 return undefined
         }
@@ -51,5 +51,9 @@ export class HoyoAPI {
      */
     public async sign(paramOptions: Record<string, string>){
         
+    }
+
+    public signSync(){
+
     }
 }
