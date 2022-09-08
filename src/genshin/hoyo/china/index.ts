@@ -5,7 +5,7 @@ export const ChinaAPI: BasicAPI = {
     apis: {
         sign: {
             type: 'takumi',
-            module: 'POST',
+            method: 'POST',
             url: '/event/bbs_sign_reward/sign',
             params: ['act_id', 'region', 'uid'],
             cookie: true

@@ -62,9 +62,9 @@ class GUID {
     /**
      * UUID from name-based of MD5 hash (version 3)
      * - Per the RFC, "If backward compatibility is not an issue, SHA-1 [Version 5] is preferred."
-     * - You should use `snameUUIDFromBytes`
      * @param name name-based of the constructed UUID
      * @param namespace Namespace UUID
+     * @deprecated You should use `snameUUIDFromBytes`
      */
     public static nameUUIDFromBytes(name: string, namespace: string = this.NIL): GUID {
         let buf = new Uint8Array(16 + name.length);

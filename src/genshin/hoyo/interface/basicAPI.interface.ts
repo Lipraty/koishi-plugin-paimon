@@ -14,7 +14,7 @@ interface APIOption {
     /**API Host类型，如果为undefined，应该提供完整URL。*/
     type: 'takumi' | 'hk4e' | 'record' | undefined
     /**请求API URL不存在PUT、DELETE等具有数据库写入动作的情况 */
-    module: 'POST' | 'post' | 'GET' | 'get'
+    method: 'POST' | 'GET'
     /**如果type为undefined，应该提供完整URL。*/
     url: string
     /**限制请求参数（GET:Query|POST:Body）*/
