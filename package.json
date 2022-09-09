@@ -36,7 +36,8 @@
     },
     "service": {
       "required": [
-        "database"
+        "database",
+        "puppeteer"
       ],
       "implements": [
         "paimon"

@@ -57,7 +57,7 @@ export class HoyoDS {
             this._slat = 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs'
             return this.new(body, params)
         } else {
-            this._slat = '6cqshh5dhw73bzxn20oexa9k516chk7s'
+            this._slat = 'YVEIkzDFNHLeKXLxzqCA9TzxCpWwbIbk'
             return this.old()
         }
     }
@@ -80,7 +80,7 @@ export class HoyoDS {
      * 签到用DS
      */
     public getSign(): string {
-        this._slat = 'N50pqm7FSy2AkFz2B3TqtuZMJ5TOl3Ep'
+        this._slat = 'YVEIkzDFNHLeKXLxzqCA9TzxCpWwbIbk'
         return this.old()
     }
 }

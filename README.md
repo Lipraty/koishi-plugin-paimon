@@ -23,22 +23,35 @@ npm install koishi-plugin-paimon
 yarn add koishi-plugin-paimon
 ```
 
-## 所需koishi插件依赖
+## 所需`koishi`外部插件与依赖
 
 - `database`：用于存储用户数据
 - `koishi-plugin-puppeteer`：用于图片生成
 - `@koishijs/plugin-rate-limit`：用于指令速率限制
 
+如果未安装上述依赖，可以使用以下方法进行安装：
+
+> koishi database能对接多种平台，请选择符合自身的数据库平台；名称为`@koishijs/plugin-database-[platform]`，下列示例以sqlite为例。
+
+```Shell
+#npm:
+npm install koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plugin-rate-limit
+
+#or use yarn:
+yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plugin-rate-limit
+```
+
 ## 开发计划与进度
 
 - [x] 命令系统
 - [x] 数据库管理
-- [ ] 图片样式
+- [x] 图片样式
+  - [paimon-display](paimon-display.app.lonay.me) 项目
 - [x] 基本核心
   - UID、Cookie绑定
   - 权限管理
 - [ ] 抽卡系统
-- [ ] 米游社API
+- [x] 米游社API
   - 旅行者札记
   - 签到
   - 用户数据（数据总览）
@@ -49,9 +62,12 @@ yarn add koishi-plugin-paimon
 
 ## 插件配置指南
 
-一般情况下，推荐使用koishi控制面板进行配置
+> 一般情况下，推荐使用koishi控制面板进行配置
 
-### 编辑 koishi.yml
+<details>
+<summary>
+koishi.yml选项说明
+</summary>
 
 ```Yaml
 ...
@@ -83,41 +99,22 @@ paimon:
 ...
 ```
 
-## 命令列表
+</details>
 
-可以在聊天框输入如下命令触发
+
+
+## 命令使用
+
+插件命令统一以`paimon`开头，唯一参数为`[uid]`，随后可接额外的选项与参数。
 
 ```
-paimon [uid] --options
+paimon [uid] --options ...args
 ```
 
-其中`[uid]`被视为一个可选项，如果加入该选项则会让paimon的行为限制在该uid内。
+其中`[uid]`被视为一个可选参数，如果有该参数则会让paimon的行为限制在该uid内。
 
 - 指定的`[uid]`只能是已绑定的uid，如果未绑定该uid，则返回非绑定uid警告。
-- 部分命令会无视`[uid]`选项，如 `--uid`、`--gacha`等。
-- 用户权限在`master`所设置的之上时，将无视绑定限制。
-
-#### 普通命令列表
-
-| 选项      | 别名 | 参数             | 需要Cookie | 说明                                                                                                |
-| ----------- | ---- | ---------------- | ---------- | --------------------------------------------------------------------------------------------------- |
-| --help      | -h   |                  | ❎          | 列出所有的命令（以列出的为准）                                                                      |
-| --uid       |      | [uid]            | ❎          | 绑定该UID至发送者                                                                                   |
-| --cookie    | -ck  | [cookie]         | ❎          | 绑定Cookie至发送者 <br/>`⚠️请妥善保管您的cookie，不要将cookie交给任何人，如不信任本插件，请不要使用` |
-| --          |      |                  | ❎          | 获取用户数据信息（角色展柜、数据总览等）                                                            |
-| --character | -c   | [character name] | ❎          | 获取某个角色的数据                                                                                  |
-| --memo      | -m   |                  | ✅          | 获取实时便笺 <br/>可展示内容有：`树脂`、`洞天宝钱`、`每日委托`、`周本`、`质量参变仪`、`探索派遣`    |
-| --notes     | -n   | pri/mora         | ✅          | 旅行者札记记录 <br/>为空：获取默认数据；`pri`：获取原石明细；`mora`：获取摩拉明细                   |
-| --sign      | -s   | auto:[boolean]   | ✅          | 米游社签到 <br/>当设置aotu:true时，将加入自动签到队列                                               |
-| --reset     |      | [command]        | ❎          | 重置某个项目 <br/>目前支持 `--reset --uid [uid]`与`--reset --cookie [cookie]`，为空时则删除         |
-| --gacha     |      | ten              | ❎          | 进行抽卡 <br/>为空：单抽`ten`：十连                                                                 |
-| --abyss     | -a   | old/teams:[api]  | ✅          | 深境螺旋 <br/>为空：获取当期战绩；`old`：上期战绩；`teams`：获取推荐配队（`api`为出场统计API来源）  |
-
-#### 高级命令列表
-
-| 选项 | 别名 | 参数 | 需要Cookie | 说明 |
-| ------ | ---- | ---- | ---------- | ---- |
-
----
+- 部分命令会无视`[uid]`选项，如 `paimon.bind`、`paimon.gacha`等。
+- 当用户权限大于等于`master`选项所设置数值时，将无视任何限制。
 
 All game data & pictures from ©mihoyo
