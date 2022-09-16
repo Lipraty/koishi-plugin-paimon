@@ -27,7 +27,7 @@ export class Random {
         return UAS[this.randint(0, UAS.length)] + ` miHoYoBBS/${appVer}`
     }
 
-    public static randRef(act_id: string){
+    public static randRef(act_id: string) {
         let Refs = [
             'https://app.mihoyo.com',
             `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon`

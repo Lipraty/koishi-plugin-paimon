@@ -46,7 +46,7 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 - [x] 命令系统
 - [x] 数据库管理
 - [x] 图片样式
-  - [paimon-display](paimon-display.app.lonay.me) 项目
+  - [paimon-display](https://paimon-display.app.lonay.me) 项目
 - [x] 基本核心
   - UID、Cookie绑定
   - 权限管理

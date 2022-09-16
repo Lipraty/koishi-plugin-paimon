@@ -37,7 +37,7 @@ interface FetchAPIOptions {
     window?: null;
 }
 
-export class HoyoAPI {
+export class GenshinAPI {
     private cookie: string
     private uid: string
     private stype: ServerType = ServerType.CN
@@ -122,18 +122,23 @@ export class HoyoAPI {
 
     /**
      * 通用API请求
+     * 
+     * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
+     * 
      * @param api api选项
      * @param params 请求参数
      * @param options 额外fetch选项 
      * @param otherHeaders 额外的Headers
      */
-    private async fetchAPI(api: APIOption): Promise<Response>
-    private async fetchAPI(api: APIOption, params?: Record<string, any>): Promise<Response>
-    private async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions): Promise<Response>
-    private async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response> {
+    public async fetchAPI(api: APIOption): Promise<Response>
+    public async fetchAPI(api: APIOption, params?: Record<string, any>): Promise<Response>
+    public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions): Promise<Response>
+    public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response> {
         ///处理意外情况
         if (api.params && !params)
-            throw new SyntaxError(`[HoyoAPI]The API requires: ${api.params} parameters, but not provided.`)
+            throw new SyntaxError(`[GenshinAPI]This API requires a ${api.params} parameters, but not provided.`)
+        if (api.cookie && !this.cookie)
+            throw new SyntaxError('[GenshinAPI]This API requires a `cookie`, is provided?')
 
         let host: URL | string
         let path: string = api.url
@@ -177,8 +182,8 @@ export class HoyoAPI {
     /**
      * 米游社签到
      */
-    public async bbsSign(paramOptions: Record<string, string>) {
-        return await this.fetchAPI(this.API.sign, {
+    public async bbsSign(paramOptions?: Record<string, string>) {
+        return await this.fetchAPI(this.API.bbsSign, {
             act_id: this.act_id,
             region: this.stype,
             uid: this.uid

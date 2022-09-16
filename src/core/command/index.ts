@@ -8,7 +8,7 @@ export const modules = {
 /**
  * command基础实现
  */
-export declare class ICommand implements CommandOptions {
+declare class ICommand implements CommandOptions {
     public readonly cmd: string
     public readonly opt: boolean
     public readonly desc: string
