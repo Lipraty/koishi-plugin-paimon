@@ -1,6 +1,6 @@
 <div align="center" style="margin-top: 1rem;">
   <a target="_blank">
-      <img width="160" src="./docs/assets/logo.svg" alt="logo">
+      <img width="160" src="./koishi-plugin-paimon.wiki/assets/logo.svg" alt="logo">
   </a>
 
 # koishi-plugin-paimon
