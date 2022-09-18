@@ -1,6 +1,7 @@
 lib
 dist
 accounts
+koishi-plugin-paimon.wiki
 
 node_modules
 npm-debug.log
