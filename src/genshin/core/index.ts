@@ -1,3 +1,4 @@
+import isEqual from "lodash/isEqual";
 import { Random } from "../../utils/Random.util";
 import { UUID } from "../../utils/UUID.util";
 import { ChinaAPI } from "./china"
@@ -46,10 +47,12 @@ export class GenshinAPI {
     private Hk4e: string | URL
     private Record: string | URL
     private API: Record<string, APIOption>
+    private _device: string
 
-    constructor(uid: string, cookie?: string) {
+    constructor(uid: string, cookie?: string, device?: string) {
         this.uid = uid
         this.cookie = cookie
+        this._device = device
 
         this.stype = this.getServerType()
 
@@ -91,7 +94,7 @@ export class GenshinAPI {
     }
 
     private device(): string {
-        return
+        return this._device || `Paimon${UUID.randomUUID().unsign()}`
     }
 
     private createHeaders(ck: boolean, query?: Record<string, any>, param?: Record<string, any>): HeadersInit {
@@ -126,19 +129,47 @@ export class GenshinAPI {
      * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
      * 
      * @param api api选项
+     */
+    public async fetchAPI(api: APIOption): Promise<Response>
+    /**
+     * 通用API请求
+     * 
+     * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
+     * 
+     * @param api api选项
+     * @param params 请求参数
+     */
+    public async fetchAPI(api: APIOption, params?: Record<string, any>): Promise<Response>
+    /**
+     * 通用API请求
+     * 
+     * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
+     * 
+     * @param api api选项
+     * @param params 请求参数
+     * @param options 额外fetch选项 
+     */
+    public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions): Promise<Response>
+    /**
+     * 通用API请求
+     * 
+     * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
+     * 
+     * @param api api选项
      * @param params 请求参数
      * @param options 额外fetch选项 
      * @param otherHeaders 额外的Headers
      */
-    public async fetchAPI(api: APIOption): Promise<Response>
-    public async fetchAPI(api: APIOption, params?: Record<string, any>): Promise<Response>
-    public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions): Promise<Response>
+    public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response>
     public async fetchAPI(api: APIOption, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response> {
         ///处理意外情况
         if (api.params && !params)
             throw new SyntaxError(`[GenshinAPI]This API requires a ${api.params} parameters, but not provided.`)
         if (api.cookie && !this.cookie)
             throw new SyntaxError('[GenshinAPI]This API requires a `cookie`, is provided?')
+        // if (!isEqual(api.params, params.keys()))
+        //     throw new TypeError('[GenshinAPI]The provided params do not match what is required.')
+
 
         let host: URL | string
         let path: string = api.url
@@ -163,6 +194,10 @@ export class GenshinAPI {
 
         //根据请求类型获得正确请求参数与Headers
         if (params) {
+            //如果限制了params，则抛弃限制之外的param。
+            if (api.params)
+                params = Object.fromEntries(api.params.filter(K => params.hasOwnProperty(K)).map(key => { return [key, params[key]] }))
+
             if (api.method === 'GET') {
                 host.search = new URLSearchParams(params).toString()
                 headers = this.createHeaders(api.cookie, undefined, params)
@@ -187,6 +222,6 @@ export class GenshinAPI {
             act_id: this.act_id,
             region: this.stype,
             uid: this.uid
-        })
+        }, paramOptions)
     }
 }
