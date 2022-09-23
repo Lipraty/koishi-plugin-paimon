@@ -36,7 +36,8 @@
     },
     "service": {
       "required": [
-        "database"
+        "database",
+        "puppeteer"
       ],
       "implements": [
         "paimon"
@@ -46,5 +47,12 @@
   "peerDependencies": {
     "koishi": "^4.8.6",
     "koishi-plugin-puppeteer": "^3.0.2"
+  },
+  "dependencies": {
+    "lodash.isequal": "^4.5.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.3.4"
   }
 }

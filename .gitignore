@@ -1,6 +1,8 @@
 lib
 dist
 accounts
+koishi-plugin-paimon.wiki
+.koishi-plugin-paimon.wiki
 
 node_modules
 npm-debug.log
@@ -20,3 +22,4 @@ tsconfig.tsbuildinfo
 .npmrc
 koishi.yml
 yakumo.yml
+*.wiki

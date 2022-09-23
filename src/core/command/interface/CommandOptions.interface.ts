@@ -4,5 +4,4 @@ interface CommandOptions {
     param: string
     level: number
     alias: string
-    setup(cmdx, config): string | void
 }
