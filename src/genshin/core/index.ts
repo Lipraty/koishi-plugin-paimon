@@ -116,3 +116,5 @@ export class GenshinAPI {
         return await fetch(host, { method: api.method, body, headers, ...options })
     }
 }
+
+export { ChinaAPI, OverseasAPI }
