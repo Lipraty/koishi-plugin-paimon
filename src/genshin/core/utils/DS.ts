@@ -1,6 +1,6 @@
-import { ServerType } from ".";
 import { createHash } from 'node:crypto';
-import { Random } from "../../utils/Random.util";
+import { ServerType } from "./ServerType";
+import { Random } from "./Random";
 
 export class HoyoDS {
     private _st: 'cn' | 'os'
