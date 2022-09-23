@@ -5,7 +5,7 @@
 ## 使用
 
 ```TypeScript
-import { GenshinAPI } from 'genshin';
+import { GenshinAPI } from 'genshin/core';
 
 /**
  * GenshinAPI实例
@@ -19,7 +19,7 @@ const api = GenshinAPI('0000', 'cookie...');
 
 ```TypeScript
 /**
- * 请求一个自定义API。
+ * 请求一个API。
  * 当然，一般情况下可以使用已经封装好的API，这样也会获得更好的代码提示。
  * 下面这个例子是一个‘米游社’签到API
  */
