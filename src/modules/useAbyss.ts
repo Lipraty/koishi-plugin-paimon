@@ -1,10 +1,10 @@
 import { Paimon } from "../core";
 import { basicCommand } from "../core/command";
 
-export default class notes extends basicCommand {
-    public readonly cmd = "notes"
-    public param = '[type]'
-    public desc = "获得旅行者札记记录"
+export default class useAbyss extends basicCommand {
+    public readonly cmd = "abyss"
+    public param = '<type>'
+    public desc = "深境螺旋"
     public setup(paimon: Paimon, options: object, session) {
         
         return
