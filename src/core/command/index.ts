@@ -1,66 +1,45 @@
-import { Paimon } from ".."
-import { Command } from "../common"
-import { modulesContext as context } from "./context"
+import { Command, Context, Logger } from "../common"
+import 'reflect-metadata'
+export * from "./decorators"
+export * from "./interface/ICommand.interface"
 
-export const modules = {
-    context
-}
-/**
- * command基础实现
- */
-declare class ICommand implements CommandOptions {
-    public readonly cmd: string
-    public readonly opt: boolean
-    public readonly desc: string
-    public readonly param: string
-    public readonly level: number
-    public readonly alias: string
-    public readonly maxUsage: number
-    public readonly shortcut: string
-    public readonly private: boolean
-    public readonly options: object
-    public setup(paimon: Paimon, options, session, next?): string | void
-}
+export const ALIAS_METADATA = 'alias'
+export const OPTION_METADATA = 'option:basic'
+export const SUBCMD_METADATA = 'subcmd:basic'
+export const SUBCMD_OPTION_METADATA = 'subcmd:options'
 
-/**
- * 提供基础command模板，并预决定返回值。
- */
-export class basicCommand implements ICommand {
-    public cmd: string = undefined
-    public opt: boolean = false
-    public desc: string = undefined
-    public param: string = undefined
-    public level: number = 0
-    public alias: string = undefined
-    public maxUsage: number = 0
-    public shortcut: string = undefined
-    public private: boolean = false
-    public options: object
-    public setup(paimon: Paimon, options, session, next?): string | void { return '该命令或选项可能未实现' }
-}
+const log = new Logger('paimonCommand')
 
-/**
- * command/option装载器
- * @param paimon `Paimon`实例
- * @param koishiCmd koishi.command
- * @param command command module
- */
-export function cmdBootstrap(paimon: Paimon, koishiCmd: Command, command: basicCommand) {
-    if (!command.opt) {
-        //install subcommand
-        koishiCmd = koishiCmd.subcommand(`.${command.cmd}`, command.desc).alias(`${paimon.commandName}.${command.alias}`)
-        // install subcommand's options
-        if (command.options) {
-            Object.keys(command.options).forEach(key => {
-                koishiCmd.option(key, command.options[key])
-            })
-        }
-    } else {
-        //install option
-        koishiCmd = koishiCmd.option(command.cmd, [command.alias, command.param, command.desc].join(' '))
+export class PaimonCommand {
+    public readonly name: string = 'paimon'
+    public readonly desc: string = '派蒙小助手，具体用法可发送paimon -h查看'
+
+    bootstrap(context: Context, commandMethods: any[]) {
+        let subCount = 0
+        let optCount = 0
+        commandMethods.forEach(commandTarget => {
+            const subcmd: SubCommandObject = (Reflect.getMetadata(SUBCMD_METADATA, commandTarget))
+            const cmdopt: CommandOption = Reflect.getMetadata(OPTION_METADATA, commandTarget)
+            if (subcmd) {
+                subCount++
+                let command = context.command(this.name, this.desc).alias('genshin', 'ys').subcommand(`.${subcmd.name}`, subcmd.desc)
+                if (subcmd.alias) {
+                    command = command.alias(`${this.name}.${subcmd.alias}`)
+                }
+                if (subcmd.options) {
+                    subcmd.options.forEach(opt => {
+                        command.option(opt.name, [opt.alias, opt.param, opt.desc].join(' '))
+                    })
+                }
+                command = command.action(({ options, session, next }) => { return subcmd.setup(options, session, next) })
+            }
+            if (cmdopt) {
+                optCount++
+                let command = context.command(this.name, this.desc).alias('genshin', 'ys')
+                command = command.option(cmdopt.name, [`-${cmdopt.alias}`, cmdopt.param, cmdopt.desc].join(' '))
+                command = command.action(({ options, session, next }) => { return cmdopt.setup(options, session, next) })
+            }
+        })
+        log.info('loaded', subCount, 'subcommands, ', optCount, 'options.')
     }
-    //
-    koishiCmd.action(({ options, session, next }) => {
-        return JSON.stringify({ options, session })
-    })
 }
