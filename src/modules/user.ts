@@ -1,12 +1,9 @@
-import { Paimon, Session } from "../core";
-import { basicCommand } from "../core/command";
+import { Session, Next } from "koishi"
+import { CmdOption, ICommand } from "../core/command"
 
-export default class user extends basicCommand {
-    public cmd = "user"
-    public opt = true
-    public param = '[uid]'
-    public desc = "获取角色信息（展柜、数据总览等）,默认为第一次所绑定uid的信息"
-    public setup(paimon: Paimon, options: object, session: Session<never, never>): void {
-        
+@CmdOption('user', '[uid]', '获取角色信息（展柜、数据总览等）,默认为第一次所绑定uid的信息')
+export default class user implements ICommand {
+    setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
+        return JSON.stringify(option)
     }
 }

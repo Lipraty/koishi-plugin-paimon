@@ -1,12 +1,9 @@
-import { Paimon } from "../core";
-import { basicCommand } from "../core/command";
+import { Session, Next } from "koishi"
+import { ICommand, SubCommand } from "../core/command"
 
-export default class useNotes extends basicCommand {
-    public readonly cmd = "notes"
-    public param = '[type]'
-    public desc = "获得旅行者札记记录"
-    public setup(paimon: Paimon, options: object, session) {
-        
-        return
+@SubCommand('notes', '[type]', '旅行者札记记录')
+export default class useNotes implements ICommand {
+    setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
+        return JSON.stringify(option)
     }
 }

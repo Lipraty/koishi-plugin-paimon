@@ -1,16 +1,16 @@
-import { Paimon } from "../core";
-import { basicCommand } from "../core/command";
+import { Session, Next } from "koishi";
+import { Alias, ICommand, option, SubCommand } from "../core/command";
 
-export default class useBind extends basicCommand {
-    public cmd = 'bind'
-    public param = '[param]'
-    public alias = 'b'
-    public desc = '绑定某一个项目'
-    public options = {
-        uid: '-u [uid:string] 绑定UID',
-        cookie: '-c [cookie:string] 绑定cookie'
-    }
-    public setup(paimon: Paimon, session) {
-        //...
+@SubCommand('bind', '[param]', '绑定某一个项目，具体用法可发送\'paimon.bind -h\'查看')
+@Alias('b')
+export default class useBind implements ICommand {
+    @option('-u', '[uid:string]', '绑定UID')
+    uid() { }
+
+    @option('-c', '[cookie:string]', '绑定cookie')
+    cookie() { }
+
+    setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
+        return JSON.stringify(option)
     }
 }

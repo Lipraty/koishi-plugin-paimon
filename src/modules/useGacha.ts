@@ -1,12 +1,9 @@
-import { Paimon } from "../core";
-import { basicCommand } from "../core/command";
+import { Session, Next } from "koishi";
+import { ICommand, SubCommand } from "../core/command";
 
-export default class useGacha extends basicCommand {
-    public readonly cmd = "gacha"
-    public param = '[opt]'
-    public desc = "模拟抽卡（不能保证与游戏真实概率具有关联性，仅供娱乐）"
-    public setup(paimon: Paimon, options: object, session) {
-        
-        return
+@SubCommand('gacha', '[opt]', '模拟抽卡（不能保证与游戏真实概率具有关联性，仅供娱乐）')
+export default class useGacha implements ICommand {
+    setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
+        return JSON.stringify(option)
     }
 }

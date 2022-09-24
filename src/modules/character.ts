@@ -1,14 +1,10 @@
-import { Paimon } from "../core";
-import { basicCommand } from "../core/command";
+import { Next, Session } from "../core";
+import { Alias, CmdOption, ICommand } from "../core/command";
 
-export default class character extends basicCommand {
-    public cmd = "character"
-    public opt = true
-    public alias: string = '-r'
-    public param = '<name>'
-    public desc = "获取某个角色的数据"
-    public setup(paimon: Paimon, options: object, session) {
-        
-        return
+@CmdOption('character', '<name>', '获取某个角色的数据')
+@Alias('r')
+export default class character implements ICommand {
+    setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
+        return JSON.stringify(option)
     }
 }
