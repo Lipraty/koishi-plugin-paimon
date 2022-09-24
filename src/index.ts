@@ -1,6 +1,6 @@
-import { Paimon, Context, koishiConfig, koishiCOnfig, Schema } from "./core";
-import {} from "@koishijs/plugin-console";
-import commandModules from "./modules";
+import { Paimon, Context, koishiConfig, koishiCOnfig, Schema, Logger } from "./core";
+import modules from "./modules";
+// import {} from "@koishijs/plugin-console";
 
 export const name = 'paimon'
 
@@ -14,5 +14,6 @@ export const Config: Schema<Config> = Schema.intersect([koishiCOnfig,Schema.obje
 export function apply(ctx: Context, config: Config) {
     ctx.using(['database', 'puppeteer'], ()=> {})
     const paimon = new Paimon(ctx, config)
-    paimon.create(commandModules)
+    new Logger('paimon').debug('create')
+    paimon.create(modules)
 }

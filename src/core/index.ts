@@ -1,6 +1,5 @@
-import { UUID } from "../utils/UUID.util";
-import { basicCommand, cmdBootstrap, ICommand } from "./command";
-import { Command, Context, DatabaseService, koishiCOnfig, koishiConfig, Logger, PaimonDB, PaimonDBExtend, Schema } from "./common";
+import { PaimonCommand } from "./command/";
+import { Context, DatabaseService, koishiConfig, Logger, PaimonDB, PaimonDBExtend } from "./common";
 export * from './common'
 declare module 'koishi' {
     interface Tables {
@@ -9,7 +8,7 @@ declare module 'koishi' {
 
     namespace Context {
         interface Config extends koishiConfig {
-            
+
         }
     }
 }
@@ -20,7 +19,6 @@ export class Paimon {
     public config: koishiConfig
     public database: DatabaseService
     public readonly logger = new Logger('paimom')
-    public readonly commandName = 'paimon'
     /**
      * 
      * @param context 
@@ -34,19 +32,15 @@ export class Paimon {
         context.model.extend('paimon', PaimonDBExtend.fields, PaimonDBExtend.option)
         this.database = context.database
 
-        if(!config.cookieKey){
-            const CKKey = UUID.randomUUID().unsign()
-            Object.assign(Context.Config.Advanced.dict, {
-                cookieKey: Schema.string().default(CKKey)
-            })
-            this.logger.info('config.cookieKey is undefined. set key:', CKKey)
-        }else{
-            this.logger.info('config.cookieKey setted!. the key:', config.cookieKey)
-        }
-    }
-
-    private createBasicCommand(){
-        return this.context.command(this.commandName, '派蒙小助手，具体用法可发送paimon -h查看').alias('genshin', 'ys')
+        // if(!config.cookieKey){
+        //     const CKKey = UUID.randomUUID().unsign()
+        //     Object.assign(Context.Config.Advanced.dict, {
+        //         cookieKey: Schema.string().default(CKKey)
+        //     })
+        //     this.logger.info('config.cookieKey is undefined. set key:', CKKey)
+        // }else{
+        //     this.logger.info('config.cookieKey setted!. the key:', config.cookieKey)
+        // }
     }
 
     /**
@@ -55,36 +49,15 @@ export class Paimon {
      * @param option 
      */
     public screenWebToImage(url: string | URL, option: ScreenWebToImageOptions) {
-        
+
     }
+
     /**
      * 创建Paimon命令对象
      */
-    public create(commandModules: Array<any>) {
-        //Use koishi command
-        const koishiCmd = this.createBasicCommand()
-        //Use subcommand
-        if (commandModules) {
-            let N = commandModules.length
-            commandModules.forEach((command: { new(): basicCommand }) => {
-                try {
-                    if (new command().cmd) {
-                        cmdBootstrap(this, koishiCmd, new command)
-                    } else {
-                        N--
-                    }
-                } catch (error) {
-                    N--
-                }
-            })
-            this.logger.info('started! installed', N, 'subcommands and options, takes', (performance.now() - this.__startTime), 'ms')
-        } else {
-            this.logger.error('install modules fail.')
-        }
-    }
-
-    public use(service: PropertyDescriptorMap & ThisType<any>) {
-        //注入service到Paimon实例
-        Object.defineProperties(Paimon.prototype, service)
+    public create(methods: any[]) {
+        this.logger.info('running create...')
+        const paimonCmd = new PaimonCommand()
+        paimonCmd.bootstrap(this.context, methods)
     }
 }
