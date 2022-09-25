@@ -1,18 +1,16 @@
+import axios, { AxiosRequestConfig } from 'axios'
 import { ChinaAPI } from "./china";
 import { OverseasAPI } from "./overseas";
-import { Hoyo } from "./utils/Hoyo";
 import { getServerType, ServerType } from "./utils/ServerType";
 
 export class GenshinAPI {
-    cookie: string
-    uid: string
-    serverType: ServerType = ServerType.CN
-    device: string
+    public cookie: string
+    public uid: string
+    public serverType: ServerType = ServerType.CN
 
-    constructor(uid: string, cookie?: string, device?: string) {
+    constructor(uid: string, cookie?: string) {
         this.uid = uid
         this.cookie = cookie
-        this.device = device
         this.serverType = getServerType(uid)
     }
 
@@ -22,39 +20,31 @@ export class GenshinAPI {
      * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
      * 
      * @param api api选项
+     * @param headers 请求所需的headers
      */
-    public async fetchAPI(api: APIOption | string): Promise<Response>
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>): Promise<any>
     /**
      * 通用API请求
      * 
      * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
      * 
      * @param api api选项
+     * @param headers 请求所需的headers
      * @param params 请求参数
      */
-    public async fetchAPI(api: APIOption | string, params?: Record<string, any>): Promise<Response>
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit): Promise<any>
     /**
      * 通用API请求
      * 
      * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
      * 
      * @param api api选项
-     * @param params 请求参数
-     * @param options 额外fetch选项 
-     */
-    public async fetchAPI(api: APIOption | string, params?: Record<string, any>, options?: FetchAPIOptions): Promise<Response>
-    /**
-     * 通用API请求
-     * 
-     * > 这个函数虽然是公开的，但是例如`act_id`、`uid`之类需要自行在`params`中额外指定一次。
-     * 
-     * @param api api选项
+     * @param headers 请求所需的headers
      * @param params 请求参数
      * @param options 额外fetch选项 
-     * @param otherHeaders 额外的Headers
      */
-    public async fetchAPI(api: APIOption | string, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response>
-    public async fetchAPI(api: APIOption | string, params?: Record<string, any>, options?: FetchAPIOptions, otherHeaders?: HeadersInit): Promise<Response> {
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions): Promise<any>
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions): Promise<any> {
         //根据地区载入对应的API地址
         const APIObject = (this.serverType === ServerType.CN || this.serverType === ServerType.CNB) ? ChinaAPI : OverseasAPI
         //当直接指定API名称时，则根据ServerType加载特定api
@@ -72,48 +62,45 @@ export class GenshinAPI {
         // if (!isEqual(api.params, params.keys()))
         //     throw new TypeError('[GenshinAPI]The provided params do not match what is required.')
 
-
         let host: URL | string
-        let path: string = api.url
-        let body = null
-        let headers: HeadersInit
-
-        //根据Type载入host
-        if (api.type === 'takumi') {
-            host = APIObject.takumiURL
-        } else if (api.type === 'hk4e') {
-            host = APIObject.hk4eURL
-        } else if (api.type === 'record') {
-            host = APIObject.recordURL
+        if (api.type) {
+            //根据Type载入host
+            if (api.type === 'takumi') {
+                host = APIObject.takumiURL
+            } else if (api.type === 'hk4e') {
+                host = APIObject.hk4eURL
+            } else if (api.type === 'record') {
+                host = APIObject.recordURL
+            }
+            if (typeof host === 'string') {
+                host = new URL(host)
+            }
+            host.pathname = api.url
         } else {
+            //如果未定义type，则将url作为host，而不是path。
             host = new URL(api.url)
-            path = undefined
         }
 
-        //转为URL
-        if (typeof host === 'string')
-            host = new URL(host)
+        let axiosInit: AxiosRequestConfig = {
+            baseURL: host.origin,
+            url: host.pathname,
+            method: api.method,
+            headers,
+        }
 
-        //根据请求类型获得正确请求参数与Headers
+        //根据请求类型获得正确请求参数
         if (params) {
-            //如果限制了params，则抛弃限制之外的param。
+            //修剪限制之外的param。
             if (api.params)
                 params = Object.fromEntries(api.params.filter(K => params.hasOwnProperty(K)).map(key => { return [key, params[key]] }))
-
             if (api.method === 'GET') {
-                host.search = new URLSearchParams(params).toString()
-                headers = Hoyo.headers(this.serverType, this.device, this.cookie, undefined, params)
+                axiosInit.params = new URLSearchParams(params as URLSearchParams).toString()
             } else {
-                body = params
-                headers = Hoyo.headers(this.serverType, this.device, this.cookie, params, undefined)
+                axiosInit.data = params as BodyInit
             }
         }
 
-        //合并额外的Headers
-        if (otherHeaders)
-            headers = Object.assign(headers, otherHeaders)
-
-        return await fetch(host, { method: api.method, body, headers, ...options })
+        return await axios(axiosInit)
     }
 }
 
