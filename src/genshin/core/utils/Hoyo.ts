@@ -93,19 +93,20 @@ export class Hoyo {
         return `Paimon/${Random.randstr(12)}`
     }
 
-    public headers(query?: Record<string, any>, body?: Record<string, any>): HeadersInit {
+    public headers(cookie: string, query?: Record<string, any>, body?: Record<string, any>): Record<string, string | number | boolean> {
         return {
             'x-rpc-app_version': this.appVersion,
             'x-rpc-client_type': this.clientType.toString(),
+            'cookie': cookie,
             'User-Agent': [Random.randUA(this.device), this._UAEnd].join(' '),
             'Referer': this.st === 'cn' ? `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${this.act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon` : `https://webstatic-sea.hoyolab.com`,
             'DS': this.newDS(query, body)
         }
     }
 
-    public signHeader() {
+    public signHeader(cookie: string): Record<string, string | number | boolean> {
         this.salt = 'YVEIkzDFNHLeKXLxzqCA9TzxCpWwbIbk'
-        let headers = this.headers()
+        let headers = this.headers(cookie)
 
         headers['DS'] = this.oldDS()
 
