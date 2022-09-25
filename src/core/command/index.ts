@@ -35,9 +35,9 @@ export class PaimonCommand {
             }
             if (cmdopt) {
                 optCount++
-                let command = context.command(this.name, this.desc).alias('genshin', 'ys')
-                command = command.option(cmdopt.name, [`-${cmdopt.alias}`, cmdopt.param, cmdopt.desc].join(' '))
-                command = command.action(({ options, session, next }) => { return cmdopt.setup(options, session, next) })
+                context.command(this.name, this.desc).alias('genshin', 'ys')
+                    .option(cmdopt.name, [`-${cmdopt.alias}`, cmdopt.param, cmdopt.desc].join(' '))
+                    .action(({ options, session, next }) => { return cmdopt.setup(options, session, next) })
             }
         })
         log.info('loaded', subCount, 'subcommands, ', optCount, 'options.')
