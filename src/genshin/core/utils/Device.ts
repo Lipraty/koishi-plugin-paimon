@@ -45,13 +45,12 @@ export class DeviceInfo {
 
     /**
      * 基于UID生成设备信息，以保证每个UID请求API时是独立的设备信息，并规避单UID多随机设备导致的风控问题。
-     * @param uid 
      */
-    public createDevice() {
+    public createDevice(): DeviceInformation {
         const uidKey: Buffer = createHash('md5').update(this.uid).digest()
         const ukHex: string = uidKey.toString('hex')
 
-        const aid = `PAIMON.${Math.trunc(parseInt(ukHex, 16) / 1e+33)}.001`
+        const aid: string = `PAIMON.${Math.trunc(parseInt(ukHex, 16) / 1e+33)}.001`
 
         return {
             Display: aid,
