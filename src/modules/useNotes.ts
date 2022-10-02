@@ -1,4 +1,4 @@
-import { Session, Next } from "koishi"
+import { Session, Next } from "../core"
 import { ICommand, SubCommand } from "../core/command"
 
 @SubCommand('notes', '[type]', '旅行者札记记录')

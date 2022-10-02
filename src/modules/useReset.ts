@@ -1,4 +1,4 @@
-import { Session, Next } from "koishi";
+import { Session, Next } from "../core";
 import { SubCommand, ICommand, option } from "../core/command";
 
 @SubCommand('reset', '[uid]', '重置一个项目')

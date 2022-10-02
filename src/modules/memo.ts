@@ -5,6 +5,6 @@ import { Alias, CmdOption, ICommand } from "../core/command";
 @Alias('m')
 export default class memo implements ICommand {
     setup(option: any, session: Session<never, never>, next: Next): string | void | Promise<string | void> {
-        return JSON.stringify(option)
+        return 'memo:' + JSON.stringify(option)
     }
 }

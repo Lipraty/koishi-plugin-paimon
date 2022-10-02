@@ -1,4 +1,4 @@
-import { Session, Next } from "koishi";
+import { Session, Next } from "../core";
 import { Alias, ICommand, option, SubCommand } from "../core/command";
 
 @SubCommand('bind', '[param]', '绑定某一个项目，具体用法可发送\'paimon.bind -h\'查看')
