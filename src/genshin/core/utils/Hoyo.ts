@@ -1,54 +1,55 @@
 import { createHash } from "node:crypto"
+import { DeviceInfo } from "./device"
 import { Random } from "./Random"
-import { ServerType } from "./ServerType"
+import { getServerType, ServerType } from "./ServerType"
 import { UUID } from "./UUID"
 
-type ClientType = 1 | 2 | 3 | 4 | 5
+type HoyoConfig = {
+    actID: string
+    clientType: number
+    appver: string
+    header: string
+    salt: string
+}
 
-const config = {
-    act_id: 'e202009291139501',
-    saltCN: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs',
-    saltOS: 'n0KjuIrKgLHh08LWSCYP0WXlVXaYvV64',
-    appverCN: '2.37.1',
-    appverOS: '2.9.0',
-    headerCN: 'miHoYoBBS',
-    headerOS: 'miHoYoBBSOversea'
+const config: Record<'cn' | 'os', HoyoConfig> = {
+    cn: {
+        actID: 'e202009291139501',
+        clientType: 5,
+        appver: '2.37.1',
+        header: 'miHoYoBBS',
+        salt: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs'
+    },
+    os: {
+        actID: '',
+        clientType: 5,
+        appver: '2.9.0',
+        header: 'miHoYoBBSOversea',
+        salt: 'n0KjuIrKgLHh08LWSCYP0WXlVXaYvV64'
+    }
 }
 
 export class Hoyo {
-    public readonly act_id = config.act_id
-    private salt: string = 'YVEIkzDFNHLeKXLxzqCA9TzxCpWwbIbk'
-    private appVersion: string
-    private clientType: ClientType
-    private st: 'cn' | 'os'
-    private _UAEnd: string
-    private device: string
+    private srvType: 'cn' | 'os'
+    private device: DeviceInformation
+    private conf: HoyoConfig
 
-    public static readonly act_id: string = config.act_id
-
-    constructor(serverType: ServerType, device?: string)
-    constructor(serverType: ServerType, client?: ClientType)
-    constructor(serverType: ServerType, deviceORclient?: string | ClientType) {
+    constructor(uid: string) {
+        let serverType = getServerType(uid)
         if (serverType === ServerType.CN || serverType === ServerType.CNB) {
-            this.st = 'cn'
-            this.salt = config.saltCN
-            this.appVersion = config.appverCN
-            this.clientType = 5
-            this._UAEnd = `miHoYoBBS/${this.appVersion}`
+            this.srvType = 'cn'
+            this.conf = config.cn
         } else {
-            this.st = 'os'
-            this.salt = config.saltOS
-            this.appVersion = config.appverOS
-            this.clientType = 2
-            this._UAEnd = `miHoYoBBSOversea/${this.appVersion}`
+            this.srvType = 'os'
+            this.conf = config.os
         }
 
-        if (typeof deviceORclient === 'string') {
-            this.device = deviceORclient
-        } else {
-            this.device = this.createDevice()
-            this.clientType = deviceORclient
-        }
+        //基于UID创建Device信息
+        this.device = new DeviceInfo(uid).createDevice()
+    }
+
+    get act_id() {
+        return this.conf.actID
     }
 
     //# miHoyoDS
@@ -79,7 +80,7 @@ export class Hoyo {
 
     private hash(value: Record<string, any>): string {
         //默认加入salt
-        let temp: string[] = ['salt=' + this.salt];
+        let temp: string[] = ['salt=' + this.conf.salt];
         //将object拆分为键值对array
         Object.keys(value).forEach(key => {
             temp.push(`${key}=${value[key]}`)
@@ -89,23 +90,18 @@ export class Hoyo {
     }
     //# miHoyoDS END
 
-    public createDevice() {
-        return `Paimon/${Random.randstr(12)}`
-    }
-
     public headers(cookie: string, query?: Record<string, any>, body?: Record<string, any>): Record<string, string | number | boolean> {
         return {
-            'x-rpc-app_version': this.appVersion,
-            'x-rpc-client_type': this.clientType.toString(),
+            'x-rpc-app_version': this.conf.appver,
+            'x-rpc-client_type': this.conf.clientType.toString(),
             'cookie': cookie,
-            'User-Agent': [Random.randUA(this.device), this._UAEnd].join(' '),
-            'Referer': this.st === 'cn' ? `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${this.act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon` : `https://webstatic-sea.hoyolab.com`,
+            'User-Agent': [Random.randUA(this.device.Display), `${this.conf.header}/${this.conf.appver}`].join(' '),
+            'Referer': this.srvType === 'cn' ? `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${this.act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon` : `https://webstatic-sea.hoyolab.com`,
             'DS': this.newDS(query, body)
         }
     }
 
     public signHeader(cookie: string): Record<string, string | number | boolean> {
-        this.salt = 'YVEIkzDFNHLeKXLxzqCA9TzxCpWwbIbk'
         let headers = this.headers(cookie)
 
         headers['DS'] = this.oldDS()
@@ -113,11 +109,11 @@ export class Hoyo {
         return Object.assign(headers, {
             'x-rpc-device_id': UUID.randomUUID(),
             'x-rpc-platform': 'android',
-            'x-rpc-device_model': `MI ${this.device}`,
-            'x-rpc-device_name': `MI ${this.device}`,
+            'x-rpc-device_model': this.device.Model,
+            'x-rpc-device_name': this.device.Display,
             'x-rpc-channel': 'miyousheluodi',
             'x-rpc-sys_version': '6.0.1',
-            'X-Requested-With': this.st === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
+            'X-Requested-With': this.srvType === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
         })
     }
 }
