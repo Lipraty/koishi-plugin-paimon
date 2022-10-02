@@ -1,5 +1,4 @@
 import { Schema } from ".."
-import { UUID } from "../../../utils/UUID.util"
 
 interface characterOptions {
     panelApi: any
@@ -17,6 +16,7 @@ export interface koishiConfig {
     pushTime: string
     pushCount: number
     character: characterOptions
+    taskPoolTimer: number
 }
 
 export const koishiCOnfig: Schema<koishiConfig> = Schema.object({
@@ -32,5 +32,6 @@ export const koishiCOnfig: Schema<koishiConfig> = Schema.object({
     character: Schema.object({
         panelApi: Schema.union(['Enka', 'Enka-CNproxy', 'Enka-KRproxy']).default('Enka').description('选择面板请求API'),
         roles: Schema.string().default("").description('角色额外别名文件路径，文件为json')
-    })
+    }),
+    taskPoolTimer: Schema.number().min(0).max(300).default(60).description('任务池执行间隔时间，以保证轮询接口时不会因间隔太短而被米哈游拦截。')
 })
