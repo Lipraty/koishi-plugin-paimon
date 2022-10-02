@@ -9,7 +9,7 @@ const config = {
     act_id: 'e202009291139501',
     saltCN: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs',
     saltOS: 'n0KjuIrKgLHh08LWSCYP0WXlVXaYvV64',
-    appverCN: '2.36.1',
+    appverCN: '2.37.1',
     appverOS: '2.9.0',
     headerCN: 'miHoYoBBS',
     headerOS: 'miHoYoBBSOversea'
