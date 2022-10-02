@@ -24,6 +24,13 @@ export const ChinaAPI: BasicAPI = {
             params: ['act_id', 'region', 'uid'],
             cookie: true
         },
+        dailyNote: {
+            type: 'takumi',
+            method: 'GET',
+            url: '/game_record/app/genshin/api/dailyNote',
+            params: ['role_id', 'server'],
+            cookie: true
+        },
         
     }
 }
