@@ -1,17 +1,20 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import { ChinaAPI } from "./china";
 import { OverseasAPI } from "./overseas";
+import { Hoyo } from './utils/Hoyo';
 import { getServerType, ServerType } from "./utils/ServerType";
 
 export class GenshinAPI {
     public cookie: string
     public uid: string
     public serverType: ServerType = ServerType.CN
+    public hoyoKit: Hoyo
 
     constructor(uid: string, cookie?: string) {
         this.uid = uid
         this.cookie = cookie
         this.serverType = getServerType(uid)
+        this.hoyoKit = new Hoyo(uid)
     }
 
     /**

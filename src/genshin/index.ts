@@ -4,13 +4,12 @@ import { GachaCore } from "./gacha";
 
 export namespace Genshin {
     export class API extends GenshinAPI {
-        hoyoKit = new Hoyo(this.serverType)
         /**
          * 米游社签到
          */
         public async bbsSign() {
             return await this.fetchAPI('bbsSign', this.hoyoKit.signHeader(this.cookie), {
-                act_id: Hoyo.act_id,
+                act_id: this.hoyoKit.act_id,
                 region: this.serverType,
                 uid: this.uid
             })
