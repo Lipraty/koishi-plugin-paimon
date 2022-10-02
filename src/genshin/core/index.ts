@@ -25,7 +25,7 @@ export class GenshinAPI {
      * @param api api选项
      * @param headers 请求所需的headers
      */
-    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>): Promise<any>
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>)
     /**
      * 通用API请求
      * 
@@ -35,7 +35,7 @@ export class GenshinAPI {
      * @param headers 请求所需的headers
      * @param params 请求参数
      */
-    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit): Promise<any>
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit)
     /**
      * 通用API请求
      * 
@@ -46,8 +46,8 @@ export class GenshinAPI {
      * @param params 请求参数
      * @param options 额外fetch选项 
      */
-    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions): Promise<any>
-    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions): Promise<any> {
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions)
+    public async fetchAPI(api: APIOption | string, headers: Record<string, string | number | boolean>, params?: string | Record<string, string> | URLSearchParams | string[][] | BodyInit, options?: FetchAPIOptions) {
         //根据地区载入对应的API地址
         const APIObject = (this.serverType === ServerType.CN || this.serverType === ServerType.CNB) ? ChinaAPI : OverseasAPI
         //当直接指定API名称时，则根据ServerType加载特定api
@@ -65,7 +65,8 @@ export class GenshinAPI {
         // if (!isEqual(api.params, params.keys()))
         //     throw new TypeError('[GenshinAPI]The provided params do not match what is required.')
 
-        let host: URL | string
+        let host: URL | string, query: any, body: any
+
         if (api.type) {
             //根据Type载入host
             if (api.type === 'takumi') {
@@ -84,26 +85,27 @@ export class GenshinAPI {
             host = new URL(api.url)
         }
 
-        let axiosInit: AxiosRequestConfig = {
-            baseURL: host.origin,
-            url: host.pathname,
-            method: api.method,
-            headers,
-        }
-
         //根据请求类型获得正确请求参数
         if (params) {
             //修剪限制之外的param。
             if (api.params)
                 params = Object.fromEntries(api.params.filter(K => params.hasOwnProperty(K)).map(key => { return [key, params[key]] }))
-            if (api.method === 'GET') {
-                axiosInit.params = new URLSearchParams(params as URLSearchParams).toString()
+
+            if (api.method.toUpperCase() === 'GET') {
+                query = new URLSearchParams(params as URLSearchParams).toString()
             } else {
-                axiosInit.data = params as BodyInit
+                body = params as BodyInit
             }
         }
 
-        return await axios(axiosInit)
+        return (await axios({
+            baseURL: host.origin,
+            url: host.pathname,
+            method: api.method,
+            data: body,
+            params: query,
+            headers
+        })).data as any
     }
 }
 
