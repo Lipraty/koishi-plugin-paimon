@@ -1,5 +1,5 @@
 import { PaimonCommand } from "./command/";
-import { Context, DatabaseService, koishiConfig, Logger, PaimonDB, PaimonDBExtend } from "./common";
+import { Context, DatabaseService, Keys, koishiConfig, Logger, PaimonDB, PaimonDBExtend, Result } from "./common";
 export * from './common'
 declare module 'koishi' {
     interface Tables {
@@ -59,5 +59,38 @@ export class Paimon {
         this.logger.info('running create...')
         const paimonCmd = new PaimonCommand()
         paimonCmd.bootstrap(this.context, methods)
+    }
+
+    /**
+     * 根据UID查询数据库数据
+     * @param ctx
+     * @param uid 
+     */
+    public static async findByUID(ctx: Context, uid: string) {
+        return await ctx.database.get('paimon', { uid })
+    }
+
+    /**
+     * 根据session.uid查询数据库数据
+     * @param ctx 
+     * @param user 
+     * @param formatFn 
+     */
+    public static async findByUser<U>(ctx: Context, user: string, formatFn?: (data: Result<PaimonDB, Keys<PaimonDB, any>, (...args: any) => any>, index: number) => U) {
+        const dataList = await ctx.database.get('paimon', { user })
+        if (formatFn) {
+            return dataList.map(formatFn)
+        } else {
+            return dataList
+        }
+    }
+
+    /**
+     * 验证UID是否存在
+     * @param ctx 
+     * @param uid 
+     */
+    public static async exiUID(ctx: Context, uid: string) {
+        return (await ctx.database.get('paimon', { uid })).length > 0
     }
 }
