@@ -1,25 +1,26 @@
-import { Field } from ".."
+import { Field, Model } from ".."
 
 export interface PaimonDB {
     id: number
-    assignee: string
-    time: Date
-    lastCall: Date
-    interval: number
-    command: string
-
+    user: string
+    uid: string
+    cookie: string
+    active: boolean
 }
 
 export class PaimonDBExtend {
     public static fields: Field.MapField<PaimonDB> = {
         id: 'unsigned',
-        assignee: 'string',
-        time: 'timestamp',
-        lastCall: 'timestamp',
-        interval: 'integer',
-        command: 'text'
+        user: 'string',
+        uid: 'string',
+        cookie: 'text',
+        active: 'boolean'
     }
-    public static option = {
-        autoInc: true
+    public static option: Model.Config<PaimonDB> = {
+        autoInc: true,
+        foreign: {
+            user: ['user', 'uid']
+        },
+        unique: ['uid', 'cookie']
     }
 }
