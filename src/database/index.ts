@@ -45,8 +45,13 @@ export class Database {
     }
 
     public static async findUIDByActive(user: string) {
-        const data = await this.context.database.get('paimon', { active: { $eq: true } })
-        return data[0]['uid']
+        try {
+            const data = await this.context.database.get('paimon', { active: { $eq: true } })
+            return data[0]['uid']
+        } catch (error) {
+            return undefined
+        }
+
     }
 
     public static async findByUID(uid: UID) {
