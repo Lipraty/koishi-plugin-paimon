@@ -1,7 +1,20 @@
-import { Context, Logger } from "koishi";
+import { Argv, Context, Logger } from "koishi";
 import { optModules } from "./command";
 import { PaimonConfig } from "./configs";
 import { Database } from "./database";
+
+declare module 'koishi' {
+    namespace Argv {
+        interface Domain {
+            UID: string
+        }
+    }
+}
+
+Argv.createDomain('UID', source => {
+    if (isNaN(parseInt(source))) throw new Error('这不是一个正确的UID')
+    return source
+})
 
 export const name = 'paimon'
 
@@ -15,18 +28,33 @@ export function apply(ctx: Context, config: Config) {
     const database = new Database(ctx).create()
 
     // #region command(paimon)
-    ctx.command('paimon [uid]', '派蒙，最好的伙伴！发送`paimon -h`获得应急食品的食用方法')
+    ctx.command('paimon [uid:UID]', '派蒙，最好的伙伴！')
         .alias('ys', 'genshin')
-        .option('user', '-u')
+        .option('list', '-l 列出已绑定的uid列表')
         .option('memo', '-m 获取每日便笺内容')
+        .shortcut(/(\#?)派蒙|paimon$/, {
+            options: { help: true }
+        })
+        .shortcut('#uid列表', {
+            options: { list: true }
+        })
         .action(async ({ options, session }, uid) => {
             if (!uid) {
                 uid = await Database.findUIDByActive(session.uid)
                 if (!uid) {
-                    return '您还未绑定过uid！请发送`paimon.bind --uid <uid>`以绑定'
+                    return '您还未绑定过uid！请私聊发送`paimon.bind --uid <uid>`以绑定'
                 }
             }
-            return JSON.stringify({ options, uid })
+            const dataListByUser = await Database.findByUser(session.uid, (data, index) => {
+                return `${index + 1}. ${data.uid}${data.active ? ' (默认)' : ''}`
+            })
+            if (options.list) {
+                return '目前已绑定uid有\n' + dataListByUser.join('\n')
+            }
+
+
+
+            return JSON.stringify({ uid, options })
         })
     // #endregion
 
@@ -34,12 +62,7 @@ export function apply(ctx: Context, config: Config) {
     ctx.private().command('paimon.bind', '绑定账号，具体使用方法发送`paimon.bind -h`查看')
         .alias('paimon.b')
         .option('list', '-l 列出已绑定的uid列表')
-        .option('uid', '-u <uid:UID> 绑定UID到Paimon', {
-            type: (source) => {
-                if (isNaN(parseInt(source))) throw new Error('请输入正确的uid')
-                return source
-            }
-        })
+        .option('uid', '-u <uid:UID> 绑定UID到Paimon')
         .option('cookie', '-c <cookie> 绑定Cookie到Paimon')
         .action(async ({ options, session }) => {
             const dataListByUser = await Database.findByUser(session.uid, (data, index) => {
@@ -99,6 +122,28 @@ export function apply(ctx: Context, config: Config) {
                         : '，目前已绑定uid有\n' + dataListByUser.join('\n') + `\n${dataListByUser.length + 1}. ${options.uid}`}`
                 }
             }
+        })
+    // #endregion
+
+    // #region command(paimon.sign)
+    ctx.command('paimon.sign [uid:UID]', '进行米游社每日签到')
+        .alias('paimon.s')
+        .option('forever', '-f 启动定时执行签到')
+        .option('disposable', '-d 关闭定时执行并立马签到')
+        .option('info', '显示签到信息')
+        .action(({ options, session }, uid) => {
+            return JSON.stringify({ uid, options })
+        })
+    // #endregion
+
+    // #region command(paimon.sign)
+    ctx.command('paimon.character [uid:UID]', '获取展示卡中角色详情（练度、圣遗物）')
+        .alias('paimon.c', 'paimon.juese')
+        .option('list', '-l 已保存的角色练度信息')
+        .option('name', '-n 只查询某个角色')
+        .shortcut('#角色面板')
+        .action(({ options, session }, uid) => {
+            return JSON.stringify({ uid, options })
         })
     // #endregion
 }
