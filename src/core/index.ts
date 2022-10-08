@@ -1,15 +1,14 @@
 import { Service } from "koishi";
-import { GenshinAPI } from "./core";
-import { Hoyo } from "./core/utils/Hoyo";
+import { GenshinAPI } from "./genshinapi";
 import { GachaCore } from "./gacha";
 
 declare module 'koishi' {
     interface Context {
-        paimon?: Paimon
+        paimon?: Paimon.API
     }
 }
 
-export namespace Paimon extends Service {
+export namespace Paimon {
     export class API extends GenshinAPI {
         /**
          * 米游社签到
