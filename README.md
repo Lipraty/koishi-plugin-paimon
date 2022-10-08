@@ -7,7 +7,7 @@
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-paimon?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-paimon)
 
-A [koishi plugin](https://github.com/koishijs/koishi) for a certain anime game.
+A [koishi](https://github.com/koishijs/koishi) plugin for a certain anime game.
 
 </div>
 
@@ -23,7 +23,7 @@ npm install koishi-plugin-paimon
 yarn add koishi-plugin-paimon
 ```
 
-## 所需`koishi`外部插件与依赖
+### 所需`koishi`外部插件与依赖
 
 - `database`：用于存储用户数据
 - `koishi-plugin-puppeteer`：用于图片生成
@@ -104,16 +104,19 @@ paimon:
 
 ## 命令使用
 
-插件命令统一以`paimon`开头，唯一参数为`[uid]`，随后可接额外的选项与参数。
+插件命令以`paimon`开头，唯一参数为`[uid]`，随后可接额外的选项与参数。
 
+```Shell
+paimon [uid] --options [option arg]
 ```
-paimon [uid] --options ...args
-```
+
+> 具体用法可以发送`paimon -h`查看
 
 其中`[uid]`被视为一个可选参数，如果有该参数则会让paimon的行为限制在该uid内。
 
 - 指定的`[uid]`只能是已绑定的uid，如果未绑定该uid，则返回非绑定uid警告。
-- 部分命令会无视`[uid]`选项，如 `paimon.bind`、`paimon.gacha`等。
-- 当用户权限大于等于`master`选项所设置数值时，将无视任何限制。
+- 当用户权限大于等于`master`选项所设置数值时，将无视限制。
+
+插件有一个子命令`paimon.bind`，该命令用于绑定用户cookie等敏感信息，因而仅在私聊下才会生效。
 
 All game data & pictures from ©mihoyo
