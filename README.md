@@ -7,7 +7,7 @@
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-paimon?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-paimon)
 
-A koishi plugin for a certain anime game.
+A [koishi plugin](https://github.com/koishijs/koishi) for a certain anime game.
 
 </div>
 
@@ -43,22 +43,21 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 
 ## 开发计划与进度
 
-- [x] 命令系统
 - [x] 数据库管理
 - [x] 图片样式
-  - [paimon-display](https://paimon-display.app.lonay.me) 项目
-- [x] 基本核心
-  - UID、Cookie绑定
-  - 权限管理
-- [ ] 抽卡系统
-- [x] 米游社API
-  - 旅行者札记
-  - 签到
-  - 用户数据（数据总览）
-  - 深境螺旋
+  - [x] [paimon-display](https://paimon-display.app.lonay.me) 项目
+- [x] 基本
+  - [x] UID、Cookie绑定
+  - [x] 基于uid的随机device生成
+  - [ ] 权限管理
+- [ ] 米游社API
+  - [ ] 旅行者札记
+  - [ ] 签到
+  - [ ] 用户数据（数据总览）
+  - [ ] 深境螺旋
 - [ ] EnkaAPI
-  - 练度统计计算
-- [ ] 莫纳占卜屋
+  - [ ] 练度统计计算
+- [ ] 模拟抽卡
 
 ## 插件配置指南
 
