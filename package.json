@@ -7,6 +7,9 @@
   "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
   "author": "Lipraty <i@lonay.me>",
+  "workspaces":[
+    "./packages/*"
+  ],
   "files": [
     "lib",
     "dist"
