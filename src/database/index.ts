@@ -67,6 +67,10 @@ export class Database {
         }
     }
 
+    public static async findCookieByUID(uid: UID) {
+        return (await this.context.database.get('paimon', { uid: (uid as string) }))[0]['cookie'] ?? undefined
+    }
+
     public static async existUID(uid: UID): Promise<boolean> {
         return (await this.context.database.get('paimon', { uid: (uid as string) })).length > 0
     }
