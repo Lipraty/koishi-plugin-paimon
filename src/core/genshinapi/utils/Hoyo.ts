@@ -1,8 +1,10 @@
-import { createHash } from "node:crypto"
+import { Logger } from "koishi"
+import { createHash, randomUUID } from "node:crypto"
 import { DeviceInfo } from "./device"
 import { Random } from "./Random"
 import { getServerType, ServerType } from "./ServerType"
-import { UUID } from "./UUID"
+
+const logger = new Logger('hoyokit')
 
 type HoyoConfig = {
     actID: string
@@ -15,7 +17,7 @@ type HoyoConfig = {
 const config: Record<'cn' | 'os', HoyoConfig> = {
     cn: {
         actID: 'e202009291139501',
-        clientType: 5,
+        clientType: 2,
         appver: '2.37.1',
         header: 'miHoYoBBS',
         salt: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs'
@@ -107,12 +109,12 @@ export class Hoyo {
         headers['DS'] = this.oldDS()
 
         return Object.assign(headers, {
-            'x-rpc-device_id': UUID.randomUUID(),
+            'x-rpc-device_id': randomUUID().replace(/-/g, ''),
             'x-rpc-platform': 'android',
             'x-rpc-device_model': this.device.Model,
             'x-rpc-device_name': this.device.Display,
             'x-rpc-channel': 'miyousheluodi',
-            'x-rpc-sys_version': '6.0.1',
+            'x-rpc-sys_version': '12',
             'X-Requested-With': this.srvType === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
         })
     }

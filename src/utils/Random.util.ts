@@ -24,7 +24,7 @@ export class Random {
             `Mozilla/5.0 (Linux; Android 12; Unspecified Device) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.129 Mobile Safari/537.36`
         ]
 
-        return UAS[this.randint(0, UAS.length)] + ` miHoYoBBS/${appVer}`
+        return UAS//this.randint(0, UAS.length - 1)
     }
 
     public static randRef(act_id: string) {
@@ -33,6 +33,6 @@ export class Random {
             `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon`
         ]
 
-        return Refs[this.randint(0, Refs.length)]
+        return Refs[this.randint(0, Refs.length - 1)]
     }
 }

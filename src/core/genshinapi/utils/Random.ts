@@ -16,7 +16,7 @@ export class Random {
      * @param stop 
      */
     public static randint(start: number, stop: number): number {
-        return Math.floor(Math.random() * (start - stop)) + start
+        return Math.floor(Math.random() * (stop - start + 1)) + start
     }
 
     /**
@@ -32,13 +32,13 @@ export class Random {
         return str
     }
 
-    public static randUA(device: string): string {
+    public static randUA(device: string) {
         let UAS = [
             `Mozilla/5.0 (Linux; Android 12; ${device}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.73 Mobile Safari/537.36`,
             `Mozilla/5.0 (Linux; Android 12; Unspecified Device) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.129 Mobile Safari/537.36`,
             `Mozilla/5.0 (Linux; Android 11; ${device}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.1451.4 Mobile Safari/537.36`,
         ]
 
-        return UAS[this.randint(0, UAS.length)]
+        return UAS[(this.randint(0, UAS.length - 1))]
     }
 }

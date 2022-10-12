@@ -50,21 +50,21 @@ export class DeviceInfo {
         const uidKey: Buffer = createHash('md5').update(this.uid).digest()
         const ukHex: string = uidKey.toString('hex')
 
-        const aid: string = `PAIMON.${Math.trunc(parseInt(ukHex, 16) / 1e+33)}.001`
+        const aid: string = `KOISHI.${Math.trunc(parseInt(ukHex, 16) / 1e+33)}.011`
 
         return {
             Display: aid,
-            Product: 'paimon',
-            Device: 'paimon',
+            Product: 'koishi',
+            Device: 'koishi',
             Board: 'lipraty',
-            Model: 'paimon',
+            Model: 'koishi',
             BootId: `${ukHex.substring(0, 8)}-${ukHex.substring(8, 4)}-${ukHex.substring(12, 4)}-${ukHex.substring(16, 4)}-${ukHex.substring(20)}`,
             ProcId: `Linux version 3.0.31-${ukHex.substring(8, 16)} (android-build@hyproin.mihoyo.com)`,
             OSType: 'android',
             IMEI: this.createImei(),
             AndroidID: aid,
             VendorName: 'MIUI',
-            VendorOSName: 'paimon',
+            VendorOSName: 'koishi',
             Version: {
                 Incremental: uidKey.readUInt32BE(12),
                 Release: 10,

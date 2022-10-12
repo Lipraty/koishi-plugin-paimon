@@ -1,4 +1,4 @@
-import { Service } from "koishi";
+import { Logger, Service } from "koishi";
 import { GenshinAPI } from "./genshinapi";
 import { GachaCore } from "./gacha";
 
@@ -8,25 +8,34 @@ declare module 'koishi' {
     }
 }
 
+const logger = new Logger('paimonAPI')
+
 export namespace Paimon {
     export class API extends GenshinAPI {
         /**
          * 米游社签到
          */
         public async bbsSign(): Promise<SignInfo> {
-            const reqData = await this.fetchAPI('bbsSign', this.hoyoKit.signHeader(this.cookie), {
+            logger.info('[GenshinAPI-bbsSign]run sign')
+            const doSign = await this.fetchAPI('bbsSignInfo', this.hoyoKit.signHeader(this.cookie), {
                 act_id: this.hoyoKit.act_id,
                 region: this.serverType,
                 uid: this.uid
             })
-            if (reqData.retcode !== 0 || !reqData.data) {
+            if (doSign.retcode === 0 && doSign.data.data.success === 0) {
+                return doSign.data
+            } else {
+                if (doSign.data.risk_code === 375) {
+                    throw {
+                        code: 375,
+                        message: '需要验证码'
+                    }
+                }
                 throw {
-                    code: reqData.retcode,
-                    message: reqData.message,
+                    code: doSign.retcode,
+                    message: doSign.message,
                 }
             }
-
-            return reqData.data
         }
         /**
          * 实时便笺

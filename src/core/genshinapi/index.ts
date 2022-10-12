@@ -1,8 +1,11 @@
 import axios, { AxiosRequestConfig } from 'axios'
+import { Logger } from 'koishi';
 import { ChinaAPI } from "./china";
 import { OverseasAPI } from "./overseas";
 import { Hoyo } from './utils/Hoyo';
 import { getServerType, ServerType } from "./utils/ServerType";
+
+const logger = new Logger('GenshinAPI')
 
 export class GenshinAPI {
     public cookie: string
@@ -85,6 +88,13 @@ export class GenshinAPI {
             host = new URL(api.url)
         }
 
+        let requestConfig = {
+            baseURL: host.origin,
+            url: host.pathname,
+            method: api.method,
+            headers
+        }
+
         //根据请求类型获得正确请求参数
         if (params) {
             //修剪限制之外的param。
@@ -92,20 +102,13 @@ export class GenshinAPI {
                 params = Object.fromEntries(api.params.filter(K => params.hasOwnProperty(K)).map(key => { return [key, params[key]] }))
 
             if (api.method.toUpperCase() === 'GET') {
-                query = new URLSearchParams(params as URLSearchParams).toString()
+                requestConfig['url'] += '?' + new URLSearchParams(params as URLSearchParams).toString()
             } else {
-                body = params as BodyInit
+                requestConfig['data'] = params as BodyInit
             }
         }
-
-        return (await axios({
-            baseURL: host.origin,
-            url: host.pathname,
-            method: api.method,
-            data: body,
-            params: query,
-            headers
-        })).data as any
+        logger.info(requestConfig)
+        return (await axios(requestConfig)).data as any
     }
 }
 
