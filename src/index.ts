@@ -2,6 +2,7 @@ import { Argv, Context, Logger } from "koishi";
 import { optModules } from "./command";
 import { Bind } from "./command/bind.subcmd";
 import { PaimonConfig } from "./configs";
+import { Paimon } from "./core";
 import { Database } from "./database";
 
 declare module 'koishi' {
@@ -22,10 +23,11 @@ export const name = 'paimon'
 export interface Config extends PaimonConfig { }
 export const Config = PaimonConfig
 
+export const using = ['database', 'puppeteer']
+
 const logger = new Logger('paimon')
 
 export function apply(ctx: Context, config: Config) {
-    ctx.using(['database', 'puppeteer'], () => { })
     const database = new Database(ctx).create()
 
     // #region command(paimon)
@@ -93,8 +95,25 @@ export function apply(ctx: Context, config: Config) {
         .option('forever', '-f 启动定时执行签到')
         .option('disposable', '-d 关闭定时执行并立马签到')
         .option('info', '显示签到信息')
-        .action(({ options, session }, uid) => {
-            return JSON.stringify({ uid, options })
+        .action(async ({ options, session }, uid) => {
+            if (!uid) {
+                uid = await Database.findUIDByActive(session.uid)
+                if (!uid) {
+                    return '您还未绑定过uid！请私聊发送`paimon.bind --uid 你的uid`以绑定'
+                }
+            }
+
+            const cookie = await Database.findCookieByUID(uid as UID)
+            if (!cookie) {
+                return '您的uid还未绑定过cookie！请私聊发送`paimon.bind --uid ' + uid + ' --cookie 你的cookie`以绑定'
+            }
+
+            try {
+                const api = await new Paimon.API(uid, cookie).bbsSign()
+                return JSON.stringify({ uid, api })
+            } catch (error) {
+                return '请求时遇到一个错误：' + await error.toString()
+            }
         })
     // #endregion
 
@@ -105,7 +124,7 @@ export function apply(ctx: Context, config: Config) {
         .option('name', '-n 只查询某个角色')
         .shortcut('#角色面板')
         .action(({ options, session }, uid) => {
-            return JSON.stringify({ uid, options })
+            return JSON.stringify({ uid, options }) 
         })
     // #endregion
 }
