@@ -21,3 +21,9 @@ interface FetchAPIOptions {
     /** Can only be null. Used to disassociate request from any Window. */
     window?: null;
 }
+
+interface FetchError {
+    code: number
+    message: any
+    raw: Record<string | number, any>
+}
