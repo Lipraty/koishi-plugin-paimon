@@ -6,6 +6,10 @@ import { getServerType, ServerType } from "./ServerType"
 
 const logger = new Logger('hoyokit')
 
+export interface Cookie {
+    [K: string]: string | number
+}
+
 type HoyoConfig = {
     actID: string
     clientType: number
@@ -17,10 +21,10 @@ type HoyoConfig = {
 const config: Record<'cn' | 'os', HoyoConfig> = {
     cn: {
         actID: 'e202009291139501',
-        clientType: 2,
-        appver: '2.37.1',
+        clientType: 2, //1：iOS, 2: Android
+        appver: '2.38.1',
         header: 'miHoYoBBS',
-        salt: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs'
+        salt: 'PVeGWIZACpxXZ1ibMVJPi9inCY4Nd4y2'
     },
     os: {
         actID: '',
@@ -54,7 +58,7 @@ export class Hoyo {
         return this.conf.actID
     }
 
-    //# miHoyoDS
+    //#region miHoyoDS
     /**
      * 获取新版ds内容
      * @param body 
@@ -73,16 +77,16 @@ export class Hoyo {
     /**
      * 旧版本ds内容，主要用于签到
      */
-    public oldDS(): string {
+    public oldDS(salt?: string): string {
         let t: string = Math.round(new Date().getTime() / 1000).toString()
         let r: string = Random.sample('abcdefghijklmnopqrstuvwxyz0123456789'.split(''), 6).join('')
-        let c: string = this.hash({ t, r })
+        let c: string = this.hash({ t, r }, salt)
         return `${t},${r},${c}`
     }
 
-    private hash(value: Record<string, any>): string {
+    private hash(value: Record<string, any>, salt: string = this.conf.salt): string {
         //默认加入salt
-        let temp: string[] = ['salt=' + this.conf.salt];
+        let temp: string[] = ['salt=' + salt];
         //将object拆分为键值对array
         Object.keys(value).forEach(key => {
             temp.push(`${key}=${value[key]}`)
@@ -90,7 +94,7 @@ export class Hoyo {
         //序列化并md5哈希
         return createHash('md5').update(temp.join('&')).digest('hex')
     }
-    //# miHoyoDS END
+    //#endregion miHoyoDS END
 
     public headers(cookie: string, query?: Record<string, any>, body?: Record<string, any>): Record<string, string | number | boolean> {
         return {
@@ -106,7 +110,7 @@ export class Hoyo {
     public signHeader(cookie: string): Record<string, string | number | boolean> {
         let headers = this.headers(cookie)
 
-        headers['DS'] = this.oldDS()
+        headers['DS'] = this.oldDS('ZSHlXeQUBis52qD1kEgKt5lUYed4b7Bb')
 
         return Object.assign(headers, {
             'x-rpc-device_id': randomUUID().replace(/-/g, ''),
@@ -114,8 +118,38 @@ export class Hoyo {
             'x-rpc-device_model': this.device.Model,
             'x-rpc-device_name': this.device.Display,
             'x-rpc-channel': 'miyousheluodi',
-            'x-rpc-sys_version': '12',
+            'x-rpc-sys_version': this.device.Version.Release,
             'X-Requested-With': this.srvType === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
         })
+    }
+
+    /**
+     * format cookie to object
+     * @param cookie 
+     */
+    public static cookieFormat(cookie: string): Cookie {
+        //清除空格
+        cookie = cookie.replace(/\s/g, '')
+        //'key=value;foo=bar' map to [[key,value],[foo,bar]] 
+        const cookieMap = cookie.split(';').map(value => {
+            //string=string
+            if (/([\S]+)=([\S]+)/.test(value)) {
+                let tmp = value.split('=')
+                if (tmp.length === 2) {
+                    return tmp
+                }
+            }
+        })
+        //Map[[key,value],[foo,bar]] to {key=value, foo=bar}
+        return Object.fromEntries(cookieMap)
+    }
+
+    /**
+     * 
+     * @param cookie 
+     */
+    public static vertifyCookie(cookie: string): boolean {
+        const ck = this.cookieFormat(cookie)
+        return ck.login_ticket ? true : false
     }
 }
