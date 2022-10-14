@@ -67,7 +67,7 @@ export class DeviceInfo {
             VendorOSName: 'koishi',
             Version: {
                 Incremental: uidKey.readUInt32BE(12),
-                Release: 10,
+                Release: (parseInt(this.uid)) % 8 + 6,
                 CodeName: 'REL',
                 SDK: 29
             }
