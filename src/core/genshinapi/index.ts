@@ -107,7 +107,7 @@ export class GenshinAPI {
                 requestConfig['data'] = params as BodyInit
             }
         }
-        logger.info(requestConfig)
+        // logger.info(requestConfig)
         return (await axios(requestConfig)).data as any
     }
 }
