@@ -11,7 +11,42 @@ A [koishi](https://github.com/koishijs/koishi) plugin for a certain anime game.
 
 </div>
 
+## 快速使用
 
+由于paimon只是koishi中的插件，如果您需要一个完整的机器人，可以根据下列步骤快速搭建
+> 可以参考Koishi官方制作的[novelai插件安装视频教程](https://www.bilibili.com/video/BV1Cm4y1A7X7/?t=35.1)来安装paimon插件
+
+### 1. 下载并运行Koishi
+- 1.1 在Windows/macOS上运行：
+  - [点击下载Koishi桌面版](https://github.com/koishijs/koishi-desktop/releases/latest)
+  - 启动Koishi桌面版，将会在浏览器看到一个控制面板
+  - 点击控制面板中的「浏览插件」
+- 1.2 在Android上运行：
+  - [点击下载Koishi手机版](https://github.com/koishijs/koishi-android/releases/latest)
+  - 打开Koishi手机版，点击「管理koishi」后点击「启动koishi」
+  - 等待koishi启动完成后，返回到主界面，点击「启动Console」进入管理界面
+  - 点击控制面板中的「浏览插件」
+- 1.3 搜索`paimon`并点击添加，等待依赖更新完成
+
+### 2. 启用paimon插件
+
+- 在左侧菜单栏中找到「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.plugin.svg" alt="plugin"> 插件配置」，点击「待添加」，在插件选择下拉框中找到`paimon`
+- 正常来说，paimon的默认配置已经足够使用，点击右上角「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.startplugin.svg" alt="startplugin"> 启用插件」便可
+
+这样，您可以在Koishi沙盒中测试使用paimon了。如果需要进一步使用QQ，可继续下列步骤：
+
+### 3. 在Koishi中登录QQ
+
+- 准备一个QQ账号
+- 在左侧菜单栏中找到「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.plugin.svg" alt="plugin"> 插件配置」，点击进入
+- 选择“adapter-pnebot”，完成下列配置：
+  - 在`selfId`填写QQ号
+  - 在`password`中填写QQ账号密码
+  - 在`protocol`中选择“ws-reverse”
+  - 将`gocqhttp.enable`选项打开
+- 点击右上角「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.startplugin.svg" alt="startplugin"> 启用插件」
+  
+现在，你可以在QQ中使用paimon了，和机器人账号发送`paimon`或`#派蒙`获取详细用法吧！
 
 ## 安装
 
@@ -50,57 +85,16 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
   - [x] UID、Cookie绑定
   - [x] 基于uid的随机device生成
   - [ ] 权限管理
-- [ ] 米游社API
-  - [ ] 旅行者札记
-  - [ ] 签到
+- [x] 米游社API
+  - [x] 旅行者札记
+  - [x] 签到
   - [ ] 用户数据（数据总览）
   - [ ] 深境螺旋
-- [ ] EnkaAPI
-  - [ ] 练度统计计算
+- [ ] 角色数据
+  - [ ] 通过EnkaAPI获取
+  - [ ] 等级、武器、圣遗物、命座等数据管理
+  - [ ] 练度统计计算（可莉特调）
 - [ ] 模拟抽卡
-
-## 插件配置指南
-
-> 一般情况下，推荐使用koishi控制面板进行配置
-
-<details>
-<summary>
-koishi.yml选项说明
-</summary>
-
-```Yaml
-...
-#paimon插件在koishi中的名字
-paimon:
-    #高级命令响应级别
-    #对应Koishi文档中的用户级别，详阅：https://koishi.js.org/guide/database/builtin.html#用户权限
-    #在本插件中，子命令被分为高级与普通两种，当调用高级命令时，需要验证用户最低权限级别方可生效
-    master: 4
-    #用于公共查询的米游社小饼干，可以为多个
-    cookie: ["cooike"] 
-    #小饼干绑定帮助文档地址，GitHub可能访问不稳定，可以替换为其他地址
-    cookieDesc: "https://github.com/Lipraty/koishi-plugin-paimon/blob/main/docs/cookie.md"
-    #禁止使用命令列表
-    commandBan: ["command"]
-    #单用户每日抽卡次数
-    gachaCount: 1
-    #抽卡后撤回消息（30-120s，为0时不撤回）
-    gachaRevock: 0
-    #米游社推送
-    pushTime: "0 0 0/5 * * * ?"
-    pushCount: 1
-    #角色相关设置
-    character: 
-        #角色面板查询所用API，基于Enka实现，参考自`https://github.com/yoimiya-kokomi/miao-plugin`
-        panelApi: "https://enka.network/"
-        #角色额外别名文件路径，文件为json
-        roles: ""
-...
-```
-
-</details>
-
-
 
 ## 命令使用
 
