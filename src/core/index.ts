@@ -16,25 +16,49 @@ export namespace Paimon {
          * 米游社签到
          */
         public async bbsSign(): Promise<SignInfo> {
-            logger.info('[GenshinAPI-bbsSign]run sign')
-            const doSign = await this.fetchAPI('bbsSignInfo', this.hoyoKit.signHeader(this.cookie), {
+            let params = {
+                act_id: this.hoyoKit.act_id,
+                region: this.serverType,
+                uid: this.uid
+            }
+            //执行签到
+            const doSign = await this.fetchAPI('bbsSign', this.hoyoKit.signHeader(this.cookie), params)
+            if (doSign.retcode === 0 && doSign.data?.success === 0) {
+                //当日签到详情
+                const checkSign = await this.fetchAPI('bbsSignInfo', this.hoyoKit.signHeader(this.cookie), params)
+                if (checkSign.retcode === 0) {
+                    return checkSign.data
+                }
+            } else {
+                throw {
+                    code: doSign.retcode,
+                    message: doSign.data?.risk_code === 375 ? '签到需要验证码，可以发送 "paimon.bind --device" 重置设备信息后再试' : doSign.message,
+                    raw: doSign
+                }
+            }
+        }
+        /**
+         * 获取签到奖励
+         * @param today 
+         */
+        public async getSignBonus(today: string): Promise<SignHomeAward> {
+            //获得当月奖励
+            const doBonus = await this.fetchAPI('bbsSignHome', this.hoyoKit.headers(this.cookie), {
                 act_id: this.hoyoKit.act_id,
                 region: this.serverType,
                 uid: this.uid
             })
-            if (doSign.retcode === 0 && doSign.data.data.success === 0) {
-                return doSign.data
-            } else {
-                if (doSign.data.risk_code === 375) {
-                    throw {
-                        code: 375,
-                        message: '需要验证码'
-                    }
+            if (doBonus.code === 0) {
+                const mounthBonus: SignHome = doBonus.data
+                const toDay = today.split('-').map(v => parseInt(v))
+                if (mounthBonus.month === toDay[1]) {
+                    return mounthBonus.awards[toDay[2]]
                 }
-                throw {
-                    code: doSign.retcode,
-                    message: doSign.message,
-                }
+            }
+            throw {
+                code: doBonus.retcode,
+                message: doBonus.message,
+                raw: doBonus
             }
         }
         /**
