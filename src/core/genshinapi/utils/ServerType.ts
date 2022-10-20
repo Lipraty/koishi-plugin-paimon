@@ -10,7 +10,9 @@ export enum ServerType {
 export const getServerType = (uid: string): ServerType => {
     const UT = parseInt(uid[0])
     switch (UT) {
-        case 1 || 2:
+        case 1:
+            return ServerType.CN
+        case 2: 
             return ServerType.CN
         case 5:
             return ServerType.CNB
