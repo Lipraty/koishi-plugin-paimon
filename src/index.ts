@@ -4,6 +4,8 @@ import { Bind } from "./command/bind.subcmd";
 import { PaimonConfig } from "./configs";
 import { Paimon } from "./core";
 import { Database } from "./database";
+import '@koishijs/plugin-help'
+import { Hoyo } from "./core/genshinapi/utils/Hoyo";
 
 declare module 'koishi' {
     namespace Argv {
@@ -14,7 +16,7 @@ declare module 'koishi' {
 }
 
 Argv.createDomain('UID', source => {
-    if (isNaN(parseInt(source))) throw new Error('这不是一个正确的UID')
+    if (isNaN(parseInt(source))) throw new Error('""不是一个正确的uid')
     return source
 })
 
@@ -34,30 +36,34 @@ export function apply(ctx: Context, config: Config) {
     ctx.command('paimon [uid:UID]', '派蒙，最好的伙伴！')
         .alias('ys', 'genshin')
         .option('memo', '-m 获取每日便笺内容')
-        .shortcut(/(\#?)派蒙|paimon$/, {
+        .shortcut('#派蒙', {
             options: { help: true }
         })
+        .userFields(['authority'])
         .action(async ({ options, session }, uid) => {
             if (!uid) {
                 uid = await Database.findUIDByActive(session.uid)
                 if (!uid) {
-                    return '您还未绑定过uid！请私聊发送`paimon.bind --uid <uid>`以绑定'
+                    return 
                 }
             }
 
 
 
-            return JSON.stringify({ uid, options, session: session.toJSON() })
+            return JSON.stringify({ uid, options, session: session.user.authority })
         })
     // #endregion
 
     // #region command(paimon.bind)
-    ctx.command('paimon.bind', '绑定账号，具体使用方法发送`paimon.bind -h`查看')
+    ctx.command('paimon.bind [uid:UID]', '绑定uid')
         .alias('paimon.b')
         .option('list', '-l 列出已绑定的uid列表')
+        .option('del', '删除这个uid')
+        .option('device', '-d 重置该uid的设备以尝试解除验证码风控')
         .option('uid', '-u <uid:UID> 绑定UID到Paimon', { hidden: session => !(session.subtype === 'private') })
         .option('cookie', '-c <cookie> 绑定Cookie到Paimon', { hidden: session => !(session.subtype === 'private') })
         .shortcut('#uid列表', { options: { list: true } })
+
         .action(async ({ options, session }) => {
             const _bind = new Bind(session.uid, database)
 
@@ -65,7 +71,13 @@ export function apply(ctx: Context, config: Config) {
                 return await _bind.findBindList()
             }
 
+
+
             if (session.subtype === 'private') {
+                //检查cookie有无携带login_ticket
+                // if (options.cookie && !Hoyo.vertifyCookie(options.cookie))
+                //     return 'cookie不完整，请重新获取后再绑定'
+
                 if (!options.uid && options.cookie) {
                     const userData = await Database.findByUser(session.uid)
                     if (userData.length === 0) {
@@ -95,6 +107,7 @@ export function apply(ctx: Context, config: Config) {
         .option('forever', '-f 启动定时执行签到')
         .option('disposable', '-d 关闭定时执行并立马签到')
         .option('info', '显示签到信息')
+        .userFields(['authority'])
         .action(async ({ options, session }, uid) => {
             if (!uid) {
                 uid = await Database.findUIDByActive(session.uid)
@@ -107,12 +120,23 @@ export function apply(ctx: Context, config: Config) {
             if (!cookie) {
                 return '您的uid还未绑定过cookie！请私聊发送`paimon.bind --uid ' + uid + ' --cookie 你的cookie`以绑定'
             }
-
             try {
-                const api = await new Paimon.API(uid, cookie).bbsSign()
+                const api = new Paimon.API(uid, cookie)
+                const sign: SignInfo = await api.bbsSign()
+                if (sign.is_sign) {
+                    const bonus: SignHomeAward = await api.getSignBonus(sign.today)
+                    return `签到成功\n签到奖励：${bonus.name}*${bonus.cnt}\n漏签${sign.sign_cnt_missed}天`
+                }
                 return JSON.stringify({ uid, api })
             } catch (error) {
-                return '请求时遇到一个错误：' + await error.toString()
+                logger.info(error)
+                const err = await error as FetchError
+                if (err.code === -100) {
+                    return '绑定的Cookie已失效!请私聊发送`paimon.bind --uid ' + uid + ' --cookie \'你的cookie\'`以绑定'
+                } else {
+                    logger.warn('fetch error:', err.raw)
+                    return err.message
+                }
             }
         })
     // #endregion
@@ -124,7 +148,7 @@ export function apply(ctx: Context, config: Config) {
         .option('name', '-n 只查询某个角色')
         .shortcut('#角色面板')
         .action(({ options, session }, uid) => {
-            return JSON.stringify({ uid, options }) 
+            session.send(JSON.stringify({ uid, options }))
         })
     // #endregion
 }
