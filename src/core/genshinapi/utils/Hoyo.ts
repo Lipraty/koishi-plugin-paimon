@@ -91,6 +91,7 @@ export class Hoyo {
         Object.keys(value).forEach(key => {
             temp.push(`${key}=${value[key]}`)
         })
+        console.log(temp.join('&'))
         //序列化并md5哈希
         return createHash('md5').update(temp.join('&')).digest('hex')
     }
@@ -110,7 +111,7 @@ export class Hoyo {
     public signHeader(cookie: string): Record<string, string | number | boolean> {
         let headers = this.headers(cookie)
 
-        headers['DS'] = this.oldDS('ZSHlXeQUBis52qD1kEgKt5lUYed4b7Bb')
+        headers['DS'] = this.oldDS()
 
         return Object.assign(headers, {
             'x-rpc-device_id': randomUUID().replace(/-/g, ''),
