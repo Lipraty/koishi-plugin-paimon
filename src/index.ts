@@ -1,11 +1,8 @@
-import { Argv, Context, Logger, segment, sleep } from "koishi";
-import { optModules } from "./command";
-import { Bind } from "./command/bind.subcmd";
+import { Argv, Context, segment } from "koishi";
 import { PaimonConfig } from "./configs";
 import { Paimon } from "./core";
 import { Database } from "./database";
 import '@koishijs/plugin-help'
-import { Hoyo } from "./core/genshinapi/utils/Hoyo";
 
 declare module 'koishi' {
     namespace Argv {
