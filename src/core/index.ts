@@ -23,7 +23,7 @@ export namespace Paimon {
             }
             //执行签到
             const doSign = await this.fetchAPI('bbsSign', this.hoyoKit.signHeader(this.cookie), params)
-            if (doSign.retcode === 0 && doSign.message === 'OK') {
+            if (doSign.retcode === 0 && doSign.data?.risk_code !== 375) {
                 //当日签到详情
                 const checkSign = await this.fetchAPI('bbsSignInfo', this.hoyoKit.signHeader(this.cookie), params)
                 if (checkSign.retcode === 0) {
@@ -31,8 +31,8 @@ export namespace Paimon {
                 }
             } else {
                 throw {
-                    code: doSign.retcode,
-                    message: doSign.data?.risk_code === 375 ? '签到需要验证码，可以发送 "paimon.bind --device" 重置设备信息后再试' : doSign.message,
+                    code: doSign.data?.risk_code === 375 ? -375 :  doSign.retcode,
+                    message: doSign.data?.risk_code === 375 ? '需要验证码' : doSign.message,
                     raw: doSign
                 }
             }
