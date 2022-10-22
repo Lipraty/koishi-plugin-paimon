@@ -2,7 +2,7 @@
   "name": "koishi-plugin-paimon",
   "description": "A koishi plugin for a certain anime game.",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
