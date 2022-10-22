@@ -163,16 +163,12 @@ export function apply(ctx: Context, config: Config) {
             if (!uid) {
                 uid = USER.activeUID as string
                 if (!uid) {
-                    await session.send('您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定')
-                    USER.close()
-                    return
+                    return '您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定'
                 }
             }
             const cookie = await USER.cookieByUID(uid as UID)
             if (!cookie) {
-                await session.send('您的uid还未绑定过cookie！请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以绑定')
-                USER.close()
-                return
+                return '您的uid还未绑定过cookie！请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以绑定'
             }
 
             try {
@@ -181,6 +177,8 @@ export function apply(ctx: Context, config: Config) {
                 if (sign.is_sign) {
                     const bonus: SignHomeAward = await api.getSignBonus(sign.today)
                     await session.send(`签到成功\n签到奖励：${bonus.name}*${bonus.cnt}\n漏签${sign.sign_cnt_missed}天`)
+                } else {
+                    
                 }
                 // return JSON.stringify({ uid, api })
             } catch (error) {
@@ -196,13 +194,13 @@ export function apply(ctx: Context, config: Config) {
                     await session.send('绑定的Cookie已失效!请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以重新绑定')
                 } else if (err.code === -5003) {
                     await session.send('你已经签到过了')
+                } else if (err.code === -375) {
+                    await session.send('签到未成功，需要验证码，可以发送 "paimon.bind --device" 重置设备信息后再试')
                 } else {
                     logger.warn('fetch error:', err.raw)
                     await session.send('签到失败：' + err.message)
                 }
             }
-            //结束user操作
-            USER.close()
         })
     // #endregion
 
