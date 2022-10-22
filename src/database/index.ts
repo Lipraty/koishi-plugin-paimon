@@ -145,7 +145,7 @@ export class Database {
      */
     public async user(user: string, master: boolean = false) {
         const _userData = await this.createUser(user)
-        const _uidList = await this.context.database.get('paimon_uid', { uuid: _userData.uuid})
+        const _uidList = await this.context.database.get('paimon_uid', { uuid: _userData.uuid })
         this.userData = {
             uuid: _userData.uuid,
             user: _userData.user,
@@ -187,7 +187,7 @@ export class Database {
     // }
     //#endregion
 
-    public parse(uuid: string, uidObject: Record<UID, Record<Keys<UserUID>, any>>): PaimonUid[] {
+    public async parse(uuid: string, uidObject: Record<UID, Record<Keys<UserUID>, any>>): Promise<PaimonUid[]> {
         return Object.keys(uidObject).map(uid => {
             return Object.assign(uidObject[uid], { uuid, uid: uid as UID })
         })
@@ -204,15 +204,13 @@ export class Database {
      * @database
      */
     public async push() {
+        const uuid = this.userData.uuid
+        const active_uid = this.userData.active_uid
+        const characet_id = this.userData.characet_id
         //更新能修改的用户数据
-        await this.context.database.set('paimon_user', {
-            uuid: this.userData.uuid
-        }, {
-            active_uid: this.userData.active_uid,
-            characet_id: this.userData.characet_id
-        })
+        await this.context.database.set('paimon_user', { uuid }, { active_uid, characet_id })
         //同步uid修改
-        await this.context.database.upsert('paimon_uid', this.parse(this.userData.uuid, this.userData.uid))
+        await this.context.database.upsert('paimon_uid', await this.parse(uuid, this.userData.uid), 'uuid')
     }
 
     /**
@@ -329,7 +327,7 @@ export class Database {
      * @param uid 
      */
     public async removeUID(uid: UID) {
-        if(uid === this.userData.active_uid)
+        if (uid === this.userData.active_uid)
             this.userData.active_uid = null
         //在数据库中移除该uid
         await this.context.database.remove('paimon_uid', { uid })
