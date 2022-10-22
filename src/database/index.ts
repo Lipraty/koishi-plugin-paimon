@@ -16,18 +16,17 @@ export interface PaimonUser {
     characet_id: number[]
 }
 
-interface PaimonUserAll {
+export interface UserData {
     uuid: string
     user: string
-    uid: PaimonUserUID[]
-    active_uid?: UID
+    active_uid: UID | null
     characet_id: number[]
+    uid: Record<UID, Record<Keys<UserUID>, any>>
 }
 
-interface PaimonUserUID {
-    uid: UID
-    dsalt?: string
-    cookie?: string
+export interface UserUID {
+    dsalt: string
+    cookie: string | null
 }
 
 export interface PaimonUid {
@@ -57,8 +56,8 @@ export class Database {
     private _created: boolean = false
     private context: Context
     private static context: Context
-    private static userData: PaimonUserAll
-    private static userMaster: boolean = false
+    private userData: UserData
+    private userMaster: boolean = false
 
     public constructor(ctx: Context) {
         this.context = ctx
@@ -124,7 +123,7 @@ export class Database {
      * @param user 用户(`session.uid`)
      * @database
      */
-    public static async createUser(user: string) {
+    private async createUser(user: string) {
         //基于无符号UUIDv5进行生成，以保证每一个用户的唯一性
         const uuid = UUID.snameUUIDFromBytes(user).unsign()
         const findByUser = await this.context.database.get('paimon_user', uuid)
@@ -144,78 +143,82 @@ export class Database {
      * @param user 用户(`session.uid`)
      * @param master 高级权限
      */
-    public static user(user: string, master: boolean = false) {
-        //先创建用户
-        this.createUser(user).then(usr => {
-            //获取该用户绑定的uid
-            this.context.database.get('paimon_uid', { uuid: usr.uuid }).then((uid: PaimonUid[]) => {
-                this.userData = {
-                    uuid: usr.uuid,
-                    user: usr.user,
-                    uid: uid.map(V => ({ uid: V.uid, cookie: V.cookie, dsalt: V.dsalt })),
-                    active_uid: usr.active_uid,
-                    characet_id: usr.characet_id
-                }
-            })
-        })
-
-        //更新用户权限情况
+    public async user(user: string, master: boolean = false) {
+        const _userData = await this.createUser(user)
+        const _uidList = await this.context.database.get('paimon_uid', { uuid: _userData.uuid})
+        this.userData = {
+            uuid: _userData.uuid,
+            user: _userData.user,
+            uid: this.objectify(_uidList),
+            active_uid: _userData.active_uid,
+            characet_id: _userData.characet_id
+        }
         this.userMaster = master
         return this
     }
 
     //#region user datas
-    public static get uuid() {
+    public get uuid() {
         return this.userData.uuid
     }
 
-    public static get uid() {
+    public get uid() {
         return this.userData.uid
     }
 
-    // public static set uid(uid) {
+    // public set uid(uid) {
     //     this.userData.uid = uid
     // }
 
-    public static get activeUID() {
+    public get activeUID() {
         return this.userData.active_uid
     }
 
-    public static set activeUID(activeUID) {
+    public set activeUID(activeUID) {
         this.userData.active_uid = activeUID
     }
 
-    public static get characterID() {
+    public get characterID() {
         return this.userData.characet_id
     }
 
-    // public static set characterID(characterID) {
+    // public set characterID(characterID) {
     //     this.userData.characet_id = characterID
     // }
     //#endregion
 
+    public parse(uuid: string, uidObject: Record<UID, Record<Keys<UserUID>, any>>): PaimonUid[] {
+        return Object.keys(uidObject).map(uid => {
+            return Object.assign(uidObject[uid], { uuid, uid: uid as UID })
+        })
+    }
+
+    public objectify(uids: PaimonUid[]): Record<UID, Record<Keys<UserUID>, any>> {
+        return Object.fromEntries(uids.map(u => {
+            return [u.uid, { cookie: u.cookie, dsalt: u.dsalt }]
+        }))
+    }
+
     /**
      * 将用户数据操作同步至数据库
-     * - 这个操作不会更新变量缓存
      * @database
      */
-    public static async push() {
+    public async push() {
         //更新能修改的用户数据
-        await this.context.database.upsert('paimon_user', [{
+        await this.context.database.set('paimon_user', {
+            uuid: this.userData.uuid
+        }, {
             active_uid: this.userData.active_uid,
             characet_id: this.userData.characet_id
-        }], 'uuid')
-        //同步uid
-        await this.context.database.upsert('paimon_uid',
-            //将uuid合并至用户uid表
-            this.userData.uid.map(uid => Object.assign(uid, { uuid: this.userData.uuid })),
-            'uuid')
+        })
+        //同步uid修改
+        await this.context.database.upsert('paimon_uid', this.parse(this.userData.uuid, this.userData.uid))
     }
 
     /**
      * 结束user数据操作周期，更新数据并清空缓存
      */
-    public static close() {
+    public close() {
         this.push().then(() => { })
         this.userData = undefined
         this.userMaster = false
@@ -223,19 +226,15 @@ export class Database {
 
     /**
      * 查询用户角色信息
-     * - master用户拥有所有角色信息
+     * - master用户能查询非绑定角色信息
      * @database
      */
-    public static async characters(cuid?: number[]): Promise<PaimonCharacter[]> {
-        if (cuid) {
-            //未指定，将用户绑定的所有角色ID加上
-            cuid = this.userData.characet_id
-            //master返回全部，非master返回绑定的
-            return await this.context.database.get('paimon_character', this.userMaster ? {} : { cuid })
+    public async characters(cuid: number[] = this.userData.characet_id): Promise<PaimonCharacter[]> {
+        if (!this.userMaster)
+            cuid = cuid.map(id => { if (this.userData.characet_id.includes(id)) return id })
+        if (cuid.length === 0) {
+            return []
         } else {
-            //非master用户修剪至已绑定的
-            if (!this.userMaster)
-                cuid = cuid.map(id => { if (this.userData.characet_id.includes(id)) return id })
             return await this.context.database.get('paimon_character', { cuid })
         }
     }
@@ -244,29 +243,24 @@ export class Database {
      * 查询该用户下所有数据
      * @param allCharacet 是否携带完整角色数据（由于数据过多，为减轻负担默认关闭）
      */
-    public static async all(allCharacet: boolean = false): Promise<PaimonUserAll> {
+    public async all(allCharacet: boolean = false): Promise<UserData> {
         let d = this.userData
         if (allCharacet)
             d['characters'] = await this.characters()
         return d
     }
 
-    public static uidObject(): Record<UID, PaimonUserUID> {
-        return Object.fromEntries(this.userData.uid.map(uidObj => {
-            return [uidObj.uid, uidObj]
-        }))
-    }
-
-    private static async _findUIDTable(uid: UID, tableKey: Keys<PaimonUid>) {
+    private async _findUIDTable(uid: UID, tableKey: Keys<PaimonUid>) {
         if (this.userMaster) {
             //高权限直接查询uid表
             const uidT = await this.context.database.get('paimon_uid', { uid })
             return uidT[0][tableKey]
         } else {
             //用户拥有的uid组
-            const userUIDArr = this.userData.uid.map(V => V.uid)
-            if (userUIDArr.includes(uid) && userUIDArr.length > 0) {
-                return this.uidObject()[uid][tableKey]
+            const userUIDArr = Object.keys(this.userData.uid)
+            if (userUIDArr.includes(uid.toString()) && userUIDArr.length > 0) {
+                this.push()
+                return this.userData.uid[uid][tableKey]
             } else {
                 throw undefined
             }
@@ -276,18 +270,19 @@ export class Database {
      * 根据uid查询对应cookie
      * @param uid 
      */
-    public static cookieByUID = async (uid: UID): Promise<string> => this._findUIDTable(uid, 'cookie') as Promise<string>
+    public cookieByUID = async (uid: UID): Promise<string> => await this._findUIDTable(uid, 'cookie')
     /**
      * 获取这个uid的设备salt
      * @param uid 
      */
-    public static deviceSlat = async (uid: UID): Promise<string> => this._findUIDTable(uid, 'dsalt') as Promise<string>
+    public deviceSlat = async (uid: UID): Promise<string> => await this._findUIDTable(uid, 'dsalt')
 
     /**
      * 创建uid数据
      * @param uid 
      */
-    private static async createUID(uid: UID, cookie?: string) {
+    private async createUID(uid: UID, cookie?: string) {
+        console.log(this.userData)
         const uidT = await this.context.database.get('paimon_uid', { uid })
         //只有该uid不存在时创建
         if (uidT.length === 0) {
@@ -301,29 +296,16 @@ export class Database {
     /**
      * 绑定一个uid
      * @param uid 
-     * @returns {Promise<PaimonUserUID[]>} 该用户绑定的所有uid
+     * @returns 该用户绑定的所有uid
      */
-    public static async setUID(uid: UID): Promise<PaimonUserUID[]> {
-        //如果未绑定过，则设置为默认uid
-        if (this.userData.uid.length === 0)
+    public setUID(uid: UID) {
+        //如果未绑定过，则设置默认uid
+        if (Object.keys(this.userData.uid).length === 0 && !this.userData.active_uid)
             this.userData.active_uid = uid
-        //创建uid数据
-        await this.createUID(uid)
-        //将uid加入绑定列表
-        this.userData.uid.push({ uid })
-        return this.userData.uid
-    }
-
-    /**
-     * 移除这个uid，并返回新的uid组
-     * @param uid 
-     */
-    public static async removeUID(uid: UID) {
-        //在数据库中移除该uid
-        await this.context.database.remove('paimon_uid', { uid })
-        //设置为新的uid表数据
-        this.userData.uid = await this.context.database.get('paimon_uid', { uuid: this.userData.uuid })
-        return this.userData.uid
+        //将新uid加入绑定列表
+        this.userData.uid[uid] = { cookie: null, dsalt: UUID.randomUUID().unsign() }
+        this.push()
+        return this
     }
 
     /**
@@ -331,14 +313,37 @@ export class Database {
      * @param cookie 
      * @param uid 指定cookie绑定到的uid
      */
-    public static async setCookie(cookie: string, uid: UID = this.userData.active_uid) {
-        if (!Object.keys(this.uidObject()).includes(uid as string) && !this.userMaster) {
-            throw undefined
-        }
-        return await this.context.database.set('paimon_uid', { uid }, { cookie })
+    public setCookie(cookie: string, uid: UID = this.userData.active_uid) {
+        this.userData.uid[uid].cookie = cookie
+        this.push()
+        return this
     }
 
-    public static async resetDSalt(uid: UID) {
-        return this.context.database.set('paimon_uid', { uid }, { dsalt: UUID.randomUUID().unsign() })
+    public async includesUID(uid: UID) {
+        const f = await this.context.database.get('paimon_uid', { uid })
+        return f.length > 0
+    }
+
+    /**
+     * 移除这个uid，并返回新的uid组
+     * @param uid 
+     */
+    public async removeUID(uid: UID) {
+        if(uid === this.userData.active_uid)
+            this.userData.active_uid = null
+        //在数据库中移除该uid
+        await this.context.database.remove('paimon_uid', { uid })
+        delete this.userData.uid[uid]
+        this.push()
+        return this.userData.uid
+    }
+
+
+
+    public resetDSalt(uid: UID) {
+        const newSalt = UUID.randomUUID().unsign()
+        this.userData.uid[uid].dsalt = newSalt
+        this.push()
+        return newSalt
     }
 }
