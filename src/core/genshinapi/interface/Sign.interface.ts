@@ -1,3 +1,8 @@
+interface Sign {
+    month: number
+    awards: SignHomeAward[]
+}
+
 interface SignHome {
     month: number
     awards: SignHomeAward[]
