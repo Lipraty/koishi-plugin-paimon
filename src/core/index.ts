@@ -23,7 +23,7 @@ export namespace Paimon {
             }
             //执行签到
             const doSign = await this.fetchAPI('bbsSign', this.hoyoKit.signHeader(this.cookie), params)
-            if (doSign.retcode === 0 && doSign.data?.success === 0) {
+            if (doSign.retcode === 0 && doSign.message === 'OK') {
                 //当日签到详情
                 const checkSign = await this.fetchAPI('bbsSignInfo', this.hoyoKit.signHeader(this.cookie), params)
                 if (checkSign.retcode === 0) {
