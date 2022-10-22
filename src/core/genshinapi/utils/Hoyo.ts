@@ -91,7 +91,6 @@ export class Hoyo {
         Object.keys(value).forEach(key => {
             temp.push(`${key}=${value[key]}`)
         })
-        console.log(temp.join('&'))
         //序列化并md5哈希
         return createHash('md5').update(temp.join('&')).digest('hex')
     }
