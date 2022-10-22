@@ -40,7 +40,7 @@ export function apply(ctx: Context, config: Config) {
             if (!uid) {
                 uid = USER.activeUID.toString()
                 if (!uid) {
-                    await session.send('您还未绑定过uid！请私聊发送`paimon.bind 你的uid`以绑定')
+                    await session.send('您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定')
                 }
             }
 
@@ -61,8 +61,8 @@ export function apply(ctx: Context, config: Config) {
         .shortcut('#uid列表', { options: { list: true } })
         .action(async ({ options, session }, uid) => {
             const USER = await DB.user(session.uid, session.user.authority > config.master)
-            console.log(USER)
-            if (Object.keys(USER.uid).length === 0) {
+
+            if (Object.keys(USER.uid).length === 0 && !uid) {
                 await session.send('你还未绑定过uid！，请回复uid以作为默认uid绑定')
                 const sendUID = await session.prompt(30 * 1000) as UID
                 if (sendUID) {
@@ -87,20 +87,21 @@ export function apply(ctx: Context, config: Config) {
                 })
             }
             if (options.list) {
-                console.log('list:', USER)
                 return '已绑定的uid有\n' + formatUIDList(Object.keys(USER.uid) as UID[], USER.activeUID).join('\n')
             }
             if (uid) {
                 let msg = '-msg-'
                 let uidList = USER.uid
-                if (!options) {
+                if (options = {}) {
                     //已经绑定过
                     if (USER.includesUID(uid as UID)) {
-                        await session.send('这个uid已经被绑定过了')
+                        await USER.push()
+                        return '这个uid已经被绑定过了'
+                    } else {
+                        msg = Object.keys(USER.uid).length === 0 ? `第一次绑定，已将uid(${uid})设置为默认uid` : `已绑定uid(${uid})！`
                     }
                     //仅绑定uid
                     uidList = USER.setUID(uid as UID).uid
-                    msg = Object.keys(USER.uid).length === 0 ? `第一次绑定，已将uid(${uid})设置为默认uid` : `已绑定uid(${uid})！`
                 } else if (options.remove) {
                     //移除这个uid
                     if (Object.keys(USER.uid).length === 1) {
@@ -156,12 +157,13 @@ export function apply(ctx: Context, config: Config) {
         .option('disposable', '-d 关闭定时执行并立马签到')
         .option('info', '显示签到信息')
         .userFields(['authority'])
+        .shortcut('#签到')
         .action(async ({ options, session }, uid) => {
             const USER = await DB.user(session.uid, session.user.authority > config.master)
             if (!uid) {
                 uid = USER.activeUID as string
                 if (!uid) {
-                    await session.send('您还未绑定过uid！请私聊发送`paimon.bind --uid 你的uid`以绑定')
+                    await session.send('您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定')
                     USER.close()
                     return
                 }
@@ -185,10 +187,15 @@ export function apply(ctx: Context, config: Config) {
                 logger.info(error)
                 const err = await error as FetchError
                 if (err.message === 'OK') {
-                    await session.send('签到可能成功，但是无法获取奖励信息' + JSON.stringify(err.raw))
-                    await session.send(segment(''))
+                    await session.send('签到可能成功，但是无法获取奖励信息')
+                    await session.send(`<figure nickname="name">
+                        <message userId="${session.selfId}">下列为接口返回的原始信息</message>
+                        <message userId="${session.selfId}">${JSON.stringify(err.raw)}</message>
+                    </figure>`)
                 } else if (err.code === -100) {
                     await session.send('绑定的Cookie已失效!请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以重新绑定')
+                } else if (err.code === -5003) {
+                    await session.send('你已经签到过了')
                 } else {
                     logger.warn('fetch error:', err.raw)
                     await session.send('签到失败：' + err.message)
@@ -206,7 +213,8 @@ export function apply(ctx: Context, config: Config) {
         .option('name', '-n 只查询某个角色')
         .shortcut('#角色面板')
         .action(({ options, session }, uid) => {
-            session.send(JSON.stringify({ uid, options }))
+            session.send(`<figure nickname="name"><message userId="${session.selfId}" nickname="原始内容">Error</message></figure>`)
+            session.send(JSON.stringify({ uid, options, session: session.toJSON() }))
         })
     // #endregion
 }
