@@ -84,7 +84,7 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 - [x] 基本
   - [x] UID、Cookie绑定
   - [x] 基于uid的随机device生成
-  - [ ] 权限管理
+  - [x] 权限管理
 - [x] 米游社API
   - [x] 旅行者札记
   - [x] 签到
