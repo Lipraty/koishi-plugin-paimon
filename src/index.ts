@@ -1,8 +1,9 @@
-import { Argv, Context, segment } from "koishi";
+import { Argv, Context } from "koishi";
 import { PaimonConfig } from "./configs";
 import { Paimon } from "./core";
-import { Database } from "./database";
-import '@koishijs/plugin-help'
+import { Database, UserData, UserUID } from "./database";
+import { UUID } from "./utils/UUID.util";
+import '@koishijs/plugin-help';
 
 declare module 'koishi' {
     namespace Argv {
@@ -13,8 +14,10 @@ declare module 'koishi' {
 }
 
 Argv.createDomain('UID', source => {
-    if (isNaN(parseInt(source))) throw new Error(`"${source}"不是一个正确的uid`)
-    return source
+    if (/[0-9]/g.test(source))
+        return source
+    else
+        throw new Error(`"${source}"不是一个正确的uid`)
 })
 
 //#region plugin-paimon: config
@@ -25,148 +28,193 @@ export const using = ['database', 'puppeteer']
 //#endregion
 
 export function apply(ctx: Context, config: Config) {
-    const logger = ctx.logger('paimon')
+    const logger = ctx.logger(name)
     const DB = new Database(ctx)
     const database = DB.create()
+
+    const vertifyUID = (uid: UID | string) => /[0-9]/g.test(uid.toString())
+    const vertifyConfirm = (confirm: string) => /^[Yy]([EeSs]{2}?)|\u662f$/.test(confirm)
+    const formatUIDList = (uids: UID[], active: UID) =>
+        [`1、${active}（默认）`]
+            .concat(
+                uids.map(uid => { if (uid !== active) return uid })
+                    .map((uid, i) => { if (uid) return `${i + 2}、${uid}` })
+            )
+    const uuid = (userId: string) => UUID.snameUUIDFromBytes('koishi:' + userId).unsign()
+    const createUID = (cookie?: string, freeze: boolean = false): UserUID => {
+        return { dsalt: UUID.randomUUID().unsign(), cookie, freeze }
+    }
+
+    let userData: UserData
+    let userMaster: boolean = false
+    let userFirst: boolean = true
+
+    const userIncludesUID = (uid: UID | string) => Object.keys(userData.uid).includes(uid.toString())
+    const pushToDB = async (userId: string) => {
+        logger.info('end cycle, sync user modifications to the database')
+        //update user table
+        await database.set('user', { uuid: uuid(userId) }, { active_uid: userData.active_uid.toString(), characet_id: userData.characet_id })
+        //update uid table
+        await database.upsert('paimon_uid', Database.parse(uuid(userId), userData.uid))
+    }
     // #region command(paimon)
-    ctx.command('paimon [uid:UID]', '派蒙，最好的伙伴！')
-        .alias('ys', 'genshin')
-        .option('memo', '-m 获取每日便笺内容')
+    const cmd = ctx.command(`${name} [uid:UID]`, '派蒙，最好的伙伴！').alias('ys', 'genshin')
         .shortcut('#派蒙', { options: { help: true } })
-        .userFields(['authority'])
-        .action(async ({ options, session }, uid) => {
-            const USER = await DB.user(session.uid, session.user.authority > config.master)
-
-            if (!uid) {
-                uid = USER.activeUID.toString()
-                if (!uid) {
-                    await session.send('您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定')
+        .userFields(['authority', 'id'])
+        .before(async ({ session }) => {
+            userData ??= await DB.user(session.user.id)
+            userMaster = session.user.authority > config.master
+            userFirst = Object.keys(userData.uid).length === 0
+            if (userFirst) {
+                await session.send('你还未绑定过uid！，请回复uid以作为默认uid绑定')
+                const sendUID = await session.prompt(20 * 1000) as UID
+                if (sendUID && !vertifyUID(sendUID)) {
+                    return `输入的内容有误，"${sendUID}"不是一个正确的uid`
+                } else if (!sendUID) {
+                    return '等待超时，你可以发送`paimon.bind 你的uid`来绑定uid'
                 }
+                await session.execute(`paimon.bind ${sendUID}`)
             }
-
-            return JSON.stringify({ uid, options, session: session.user.authority })
+        })
+        .option('memo', '-m 获取每日便笺内容')
+        .action(async ({ options, session }, uid) => {
+            uid ??= userData.active_uid.toString()
+            if (!uid) {
+                return '你还未绑定过uid！请发送`paimon.bind 你的uid`以绑定'
+            }
         })
     // #endregion
 
     // #region command(paimon.bind)
-    ctx.command('paimon.bind [uid:UID]', '绑定uid或对绑定的uid进行操作')
-        .alias('paimon.b')
-        .option('list', '-l 列出已绑定的uid列表')
-        .option('user', '-u <user> 指定共享该uid的用户，格式为: "@xxx,@yyy"')
-        .option('remove', '-r 移除这个uid')
-        .option('default', '-d 将该uid设置为默认uid')
-        .option('device', '重置该uid的设备以尝试解除验证码风控')
-        .option('cookie', '-c <cookie> 绑定Cookie到Paimon', { hidden: session => !(session.subtype === 'private') })
-        .userFields(['authority'])
+    cmd.subcommand('.bind [uid:UID]', '绑定uid或对绑定的uid进行操作')
+        .alias(`${name}.b`)
         .shortcut('#uid列表', { options: { list: true } })
-        .action(async ({ options, session }, uid) => {
-            const USER = await DB.user(session.uid, session.user.authority > config.master)
-
-            if (Object.keys(USER.uid).length === 0 && !uid) {
-                await session.send('你还未绑定过uid！，请回复uid以作为默认uid绑定')
-                const sendUID = await session.prompt(30 * 1000) as UID
-                if (sendUID) {
-                    if (!/[0-9]/g.test(sendUID as string)) {
-                        return `输入的内容有误，"${sendUID}"不是一个正确的uid`
-                    } else {
-                        await USER.setUID(sendUID as UID).push()
-                        session.send(`已绑定uid(${sendUID})，并将该uid设置为默认uid`)
-                        console.log(USER.uid)
-                        return
-                    }
-                } else {
-                    return '等待超时，你可以发送`paimon.bind <uid>`重新绑定uid'
-                }
+        .userFields(['authority', 'id'])
+        .action(async ({ options, session, next }, uid) => {
+            userData ??= await DB.user(session.user.id)
+            userMaster = session.user.authority > config.master
+            userFirst = Object.keys(userData.uid).length === 0
+            if (uid && await Database.includeUID(uid as UID) && Object.keys(options).length === 0) {
+                return '这个uid已经被绑定过了'
+            } else if (uid && Object.keys(options).length === 0) {
+                userData.uid[uid] = createUID()
+                userData.active_uid = uid as UID
+                await session.send(`已绑定uid(${uid})`)
+            } else if (uid && !userIncludesUID(uid) && !userMaster) {
+                return '这不是你的uid，请检查'
             }
-            const formatUIDList = (uids: UID[], active: UID) => {
-                return uids.map((uid, i) => {
-                    if (uid === USER.activeUID)
-                        return `${1}、${uid}（默认）`
-                    else
-                        return `${i + 2}、${uid}`
-                })
-            }
+            return next()
+        })
+        .option('list', '-l 列出已绑定的uid列表')
+        .action(async ({ options, next }) => {
             if (options.list) {
-                return '已绑定的uid有\n' + formatUIDList(Object.keys(USER.uid) as UID[], USER.activeUID).join('\n')
+                return '已绑定的uid有\n' + formatUIDList(Object.keys(userData.uid) as UID[], userData.active_uid).join('\n')
+            } else {
+                return next()
             }
-            if (uid) {
-                let msg = '-msg-'
-                let uidList = USER.uid
-                if (options = {}) {
-                    //已经绑定过
-                    if (USER.includesUID(uid as UID)) {
-                        await USER.push()
-                        return '这个uid已经被绑定过了'
-                    } else {
-                        msg = Object.keys(USER.uid).length === 0 ? `第一次绑定，已将uid(${uid})设置为默认uid` : `已绑定uid(${uid})！`
+        })
+        .option('user', '-u <user> @某个用户以共享这个uid')
+        .action(async ({ options, session, next }, uid) => {
+            return next()
+        })
+        .option('remove', '-r 移除这个uid')
+        .action(async ({ options, session, next }, uid) => {
+            if (options.remove === true) {
+                if (!uid) {
+                    await session.send('你未指定uid，请回复下列uid之一以取消绑定\n' + formatUIDList(Object.keys(userData.uid) as UID[], userData.active_uid).join('\n'))
+                    const sendUID = await session.prompt(30 * 1000)
+                    if (sendUID && !vertifyUID(sendUID)) {
+                        return '这不是一个正确的uid'
                     }
-                    //仅绑定uid
-                    uidList = USER.setUID(uid as UID).uid
-                } else if (options.remove) {
-                    //移除这个uid
-                    if (Object.keys(USER.uid).length === 1) {
-                        //只有一条
-                        await session.send('当前只绑定了这一个uid，确定移除？（回复y/n）')
-                        const confirm = await session.prompt(20 * 1000)
-                        if (confirm) {
-                            if (/^(y|Y(?es))|是$/.test(confirm)) {
-                                uidList = await USER.removeUID(uid as UID)
-                                return `已取消uid(${uid})的绑定`
-                            } else if (/^(n|N(?o))|否$/.test(confirm)) {
-                                await session.send('已取消操作')
+                    uid = sendUID
+                }
+                if (userIncludesUID(uid)) {
+                    const ownUid = Object.keys(userData.uid).length === 1
+                    let confirm = false
+                    if (ownUid) {
+                        await session.send('当前只绑定了这一个uid，确定移除？（请回复y/n）')
+                        confirm = true
+                    } else if (uid === userData.active_uid) {
+                        await session.send('这是一个默认uid，确定移除？（请回复y/n）')
+                        confirm = true
+                    }
+                    if (confirm) {
+                        const sendConfirm = await session.prompt(10 * 1000)
+                        if (sendConfirm && sendConfirm === 'y') {
+                            delete userData.uid[uid]
+                            await database.remove('paimon_uid', { uid: uid as UID })
+                            if (ownUid) {
+                                userData.active_uid = null
+                                await session.send('已取消绑定，如果需要使用派蒙，请先发送`paimon.bind <uid>来绑定uid`')
                             } else {
-                                await session.send('输入内容有误')
+                                userData.active_uid = Object.keys(userData.uid)[0] as UID
+                                await session.send(`已取消绑定，默认uid更新为${userData.active_uid}`)
                             }
+                        } else if (sendConfirm && sendConfirm === 'n') {
+                            return '已取消操作'
                         } else {
-                            await session.send('等待超时，已取消操作')
+                            return '等待超时'
                         }
                     }
-
-                } else if (options.default) {
-                    //设置这个uid为默认
-                    USER.activeUID = uid as UID
-                    msg = `已将默认uid更改为"${uid}"`
-                } else if (options.device) {
-                    //重置uid的设备信息
-                    USER.resetDSalt(uid as UID)
-                    await session.send(`重置uid(${uid})的设备信息完成`)
-                } else if (options.cookie && session.subtype === 'private') {
-                    //私聊下的绑定cookie
-                    USER.setCookie(options.cookie, uid as UID)
-                    await session.send(`cookie已绑定到uid(${uid})下`)
-                }
-                return msg + '\n目前已绑定的uid有\n' + formatUIDList(Object.keys(uidList) as UID[], USER.activeUID).join('\n')
-            } else {
-                uid = USER.activeUID.toString()
-                if (options.cookie && session.subtype === 'private') {
-                    //私聊下的绑定cookie
-                    USER.setCookie(options.cookie)
-                    await session.send(`cookie已绑定到默认uid(${USER.activeUID})下`)
-                } else if (options.device) {
-                    USER.resetDSalt(uid as UID)
-                    await session.send(`重置默认uid(${uid})的设备信息完成`)
+                } else {
+                    await session.send('这不是你绑定的uid，无法执行移除操作')
                 }
             }
+            return next()
+        })
+        .option('default', '-d 将该uid设置为默认uid')
+        .action(async ({ options, session, next }, uid) => {
+            if (options.default === true && uid && userIncludesUID(uid)) {
+                userData.active_uid = uid as UID
+                await session.send('已设置默认uid: ' + userData.active_uid)
+            }
+            return next()
+        })
+        .option('device', '重置该uid的设备以尝试解除验证码风控')
+        .action(async ({ options, session, next }, uid) => {
+            uid ??= userData.active_uid.toString()
+            if (options.device === true) {
+                userData.uid[uid].dsalt = UUID.randomUUID().unsign()
+                await session.send(`重置${uid ? 'uid' : '默认uid'}(${uid})的设备信息完成`)
+            }
+            return next()
+        })
+        .option('cookie', '-c <cookie> 绑定Cookie到Paimon', { hidden: session => !(session.subtype === 'private') })
+        .action(async ({ options, session, next }, uid) => {
+            if (options.cookie && session.subtype === 'private') {
+                uid ??= userData.active_uid.toString()
+                userData.uid[uid].cookie = options.cookie
+                await session.send(`cookie已绑定到uid(${uid})下`)
+            }
+            return next()
+        })
+        .action(async ({ session }) => {
+            //End of cycle, push user modifications to database
+            return await pushToDB(session.user.id)
         })
     // #endregion
 
     // #region command(paimon.sign)
-    ctx.command('paimon.sign [uid:UID]', '进行米游社每日签到')
-        .alias('paimon.s')
-        .option('forever', '-f 启动定时执行签到')
-        .option('disposable', '-d 关闭定时执行并立马签到')
-        .option('info', '显示签到信息')
-        .userFields(['authority'])
+    cmd.subcommand('.sign [uid:UID]', '进行米游社每日签到')
+        .alias(`${name}.s`)
         .shortcut('#签到')
-        .action(async ({ options, session }, uid) => {
-            const USER = await DB.user(session.uid, session.user.authority > config.master)
-            if (!uid) {
-                uid = USER.activeUID as string
-                if (!uid) {
-                    return '您还未绑定过uid！请发送`paimon.bind 你的uid`以绑定'
-                }
+        .userFields(['authority', 'id'])
+        .option('auto', '-a 开启定时执行签到')
+        .option('unauto', '-u 关闭定时执行签到')
+        .action(async ({ options, session, next }, uid) => {
+            uid ??= userData.active_uid.toString()
+            if (options.auto && options.unauto) {
+                await session.send('请正确选择是否启用自动签到')
+            } else if (options.auto) {
+                await session.send(`已将"#${uid}签到"加入自动任务`)
+            } else if (options.unauto) {
+                await session.send(`自动任务"#${uid}签到"已移除`)
             }
-            const cookie = await USER.cookieByUID(uid as UID)
+            return next()
+        })
+        .action(async ({ options, session }, uid) => {
+            uid ??= userData.active_uid.toString()
+            const cookie = userData.uid[uid].cookie
             if (!cookie) {
                 return '您的uid还未绑定过cookie！请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以绑定'
             }
@@ -178,7 +226,7 @@ export function apply(ctx: Context, config: Config) {
                     const bonus: SignHomeAward = await api.getSignBonus(sign.today)
                     await session.send(`签到成功\n签到奖励：${bonus.name}*${bonus.cnt}\n漏签${sign.sign_cnt_missed}天`)
                 } else {
-                    
+
                 }
                 // return JSON.stringify({ uid, api })
             } catch (error) {
@@ -186,10 +234,7 @@ export function apply(ctx: Context, config: Config) {
                 const err = await error as FetchError
                 if (err.message === 'OK') {
                     await session.send('签到可能成功，但是无法获取奖励信息')
-                    await session.send(`<figure nickname="name">
-                        <message userId="${session.selfId}">下列为接口返回的原始信息</message>
-                        <message userId="${session.selfId}">${JSON.stringify(err.raw)}</message>
-                    </figure>`)
+                    await session.send(`<figure nickname="name"><message userId="${session.selfId}">下列为接口返回的原始信息</message><message userId="${session.selfId}">${JSON.stringify(err.raw)}</message></figure>`)
                 } else if (err.code === -100) {
                     await session.send('绑定的Cookie已失效!请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以重新绑定')
                 } else if (err.code === -5003) {
@@ -205,14 +250,16 @@ export function apply(ctx: Context, config: Config) {
     // #endregion
 
     // #region command(paimon.sign)
-    ctx.command('paimon.character [uid:UID]', '获取展示卡中角色详情（练度、圣遗物）')
-        .alias('paimon.c', 'paimon.juese')
-        .option('list', '-l 已保存的角色练度信息')
-        .option('name', '-n 只查询某个角色')
+    cmd.subcommand('.character [uid:UID]', '获取展示卡中角色详情（练度、圣遗物）')
+        .alias(`${name}.c`, `${name}.juese`)
         .shortcut('#角色面板')
-        .action(({ options, session }, uid) => {
-            session.send(`<figure nickname="name"><message userId="${session.selfId}" nickname="原始内容">Error</message></figure>`)
-            session.send(JSON.stringify({ uid, options, session: session.toJSON() }))
+        .option('list', '-l 已保存的角色练度信息')
+        .action(async ({ options, session, next }, uid) => {
+
+        })
+        .option('name', '-n 只查询某个角色')
+        .action(async ({ options, session, next }, uid) => {
+
         })
     // #endregion
 }
