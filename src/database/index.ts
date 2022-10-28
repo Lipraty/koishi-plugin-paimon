@@ -1,4 +1,5 @@
-import { Context, Keys } from "koishi"
+import { Context, Field, Keys } from "koishi"
+import * as utils from '@koishijs/utils'
 import { UUID } from "../utils/UUID.util"
 
 declare module 'koishi' {
@@ -29,11 +30,17 @@ export interface UserUID {
 }
 
 export interface PaimonUid {
-    uid: UID
+    uid: number | `${number}`
     uuid: string
     dsalt: string
     cookie: string
     freeze: boolean //并不是冻结了，准确来说是撞到验证码了，标记为冻结而略过请求。
+}
+
+export namespace PaimonUid {
+    export type Field = keyof PaimonUid
+    export const fields: Field[] = []
+    export type Observed<K extends Field = Field> = utils.Observed<Pick<User, K>, Promise<void>>
 }
 
 export interface PaimonCharacter {
