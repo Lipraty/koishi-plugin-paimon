@@ -44,6 +44,23 @@ export function apply(ctx: Context, config: Config) {
     const createUID = (cookie?: string, freeze: boolean = false): UserUID => {
         return { dsalt: UUID.randomUUID().unsign(), cookie, freeze }
     }
+    const beforeInit = async (session) => {
+        userData = await DB.user(session.user.id)
+        userMaster = session.user.authority > config.master
+        userFirst = Object.keys(userData.uid).length === 0
+    }
+    const firstBind = async (session) => {
+        if (userFirst) {
+            await session.send('你还未绑定过uid！，请回复uid以作为默认uid绑定')
+            const sendUID = await session.prompt(20 * 1000) as UID
+            if (sendUID && !vertifyUID(sendUID)) {
+                return `输入的内容有误，"${sendUID}"不是一个正确的uid`
+            } else if (!sendUID) {
+                return '等待超时，你可以发送`paimon.bind 你的uid`来绑定uid'
+            }
+            return session.execute(`paimon.bind ${sendUID}`)
+        }
+    }
 
     let userData: UserData
     let userMaster: boolean = false
@@ -56,25 +73,19 @@ export function apply(ctx: Context, config: Config) {
         await database.set('user', { uuid: uuid(userId) }, { active_uid: userData.active_uid.toString(), characet_id: userData.characet_id })
         //update uid table
         await database.upsert('paimon_uid', Database.parse(uuid(userId), userData.uid))
+        //clear data
+        userData = undefined
+        userMaster = false
+        userFirst = true
     }
     // #region command(paimon)
     const cmd = ctx.command(`${name} [uid:UID]`, '派蒙，最好的伙伴！').alias('ys', 'genshin')
         .shortcut('#派蒙', { options: { help: true } })
         .userFields(['authority', 'id'])
-        .before(async ({ session }) => {
-            userData ??= await DB.user(session.user.id)
-            userMaster = session.user.authority > config.master
-            userFirst = Object.keys(userData.uid).length === 0
-            if (userFirst) {
-                await session.send('你还未绑定过uid！，请回复uid以作为默认uid绑定')
-                const sendUID = await session.prompt(20 * 1000) as UID
-                if (sendUID && !vertifyUID(sendUID)) {
-                    return `输入的内容有误，"${sendUID}"不是一个正确的uid`
-                } else if (!sendUID) {
-                    return '等待超时，你可以发送`paimon.bind 你的uid`来绑定uid'
-                }
-                await session.execute(`paimon.bind ${sendUID}`)
-            }
+        .before(async ({ options, session }) => {
+            await beforeInit(session)
+            if (Object.keys(options).length > 0)
+                await firstBind(session)
         })
         .option('memo', '-m 获取每日便笺内容')
         .action(async ({ options, session }, uid) => {
@@ -90,10 +101,17 @@ export function apply(ctx: Context, config: Config) {
         .alias(`${name}.b`)
         .shortcut('#uid列表', { options: { list: true } })
         .userFields(['authority', 'id'])
+        .before(async ({ options, session }) => {
+            await beforeInit(session)
+            if (Object.keys(options).length > 0)
+                await firstBind(session)
+        })
         .action(async ({ options, session, next }, uid) => {
-            userData ??= await DB.user(session.user.id)
+            userData = await DB.user(session.user.id)
             userMaster = session.user.authority > config.master
             userFirst = Object.keys(userData.uid).length === 0
+
+            console.log('.bind:', userData)
             if (uid && await Database.includeUID(uid as UID) && Object.keys(options).length === 0) {
                 return '这个uid已经被绑定过了'
             } else if (uid && Object.keys(options).length === 0) {
@@ -107,7 +125,7 @@ export function apply(ctx: Context, config: Config) {
         })
         .option('list', '-l 列出已绑定的uid列表')
         .action(async ({ options, next }) => {
-            if (options.list) {
+            if (options.list && !userFirst) {
                 return '已绑定的uid有\n' + formatUIDList(Object.keys(userData.uid) as UID[], userData.active_uid).join('\n')
             } else {
                 return next()
@@ -199,6 +217,11 @@ export function apply(ctx: Context, config: Config) {
         .alias(`${name}.s`)
         .shortcut('#签到')
         .userFields(['authority', 'id'])
+        .before(async ({ options, session }) => {
+            await beforeInit(session)
+            if (Object.keys(options).length > 0)
+                await firstBind(session)
+        })
         .option('auto', '-a 开启定时执行签到')
         .option('unauto', '-u 关闭定时执行签到')
         .action(async ({ options, session, next }, uid) => {
@@ -253,6 +276,11 @@ export function apply(ctx: Context, config: Config) {
     cmd.subcommand('.character [uid:UID]', '获取展示卡中角色详情（练度、圣遗物）')
         .alias(`${name}.c`, `${name}.juese`)
         .shortcut('#角色面板')
+        .before(async ({ options, session }) => {
+            await beforeInit(session)
+            if (Object.keys(options).length > 0)
+                await firstBind(session)
+        })
         .option('list', '-l 已保存的角色练度信息')
         .action(async ({ options, session, next }, uid) => {
 
