@@ -78,23 +78,7 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 
 ## 开发计划与进度
 
-- [x] 数据库管理
-- [x] 图片样式
-  - [x] [paimon-display](https://paimon-display.app.lonay.me) 项目
-- [x] 基本
-  - [x] UID、Cookie绑定
-  - [x] 基于uid的随机device生成
-  - [x] 权限管理
-- [x] 米游社API
-  - [x] 旅行者札记
-  - [x] 签到
-  - [ ] 用户数据（数据总览）
-  - [ ] 深境螺旋
-- [ ] 角色数据
-  - [ ] 通过EnkaAPI获取
-  - [ ] 等级、武器、圣遗物、命座等数据管理
-  - [ ] 练度统计计算（可莉特调）
-- [ ] 模拟抽卡
+[see plan](https://github.com/Lipraty/koishi-plugin-paimon/issues?q=is%3Aissue+is%3Aopen+label%3Aplan)
 
 ## 命令使用
 
