@@ -1,9 +1,10 @@
-import { Argv, Context } from "koishi";
-import { PaimonConfig } from "./configs";
-import { Paimon } from "./core";
-import { Database, UserData, UserUID } from "./database";
-import { UUID } from "./utils/UUID.util";
-import '@koishijs/plugin-help';
+import { Argv, Context } from "koishi"
+import { UUID } from "./utils/UUID.util"
+import { Paimon } from "./core"
+import '@koishijs/plugin-help'
+import { PaimonConfig } from "./paimon/configs"
+import { UserData, UserUID } from "./paimon/database"
+import { Database } from "./database"
 
 declare module 'koishi' {
     namespace Argv {
@@ -79,20 +80,26 @@ export function apply(ctx: Context, config: Config) {
         userFirst = true
     }
     // #region command(paimon)
-    const cmd = ctx.command(`${name} [uid:UID]`, '派蒙，最好的伙伴！').alias('ys', 'genshin')
+    const cmd = ctx.command(`${name} [uid:UID]`, '派蒙，最好的伙伴！').alias('ys', 'genshin', 'y')
         .shortcut('#派蒙', { options: { help: true } })
         .userFields(['authority', 'id'])
         .before(async ({ options, session }) => {
+            console.log('cmd before')
             await beforeInit(session)
             if (Object.keys(options).length > 0)
                 await firstBind(session)
         })
         .option('memo', '-m 获取每日便笺内容')
         .action(async ({ options, session }, uid) => {
+            console.log('cmd action')
             uid ??= userData.active_uid.toString()
             if (!uid) {
                 return '你还未绑定过uid！请发送`paimon.bind 你的uid`以绑定'
             }
+        })
+        .subcommand('.test', { hidden: true })
+        .action(() => {
+            console.log('.test action')
         })
     // #endregion
 
