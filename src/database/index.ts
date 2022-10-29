@@ -1,6 +1,6 @@
-import { Context, Field, Keys } from "koishi"
-import * as utils from '@koishijs/utils'
+import { Context, DatabaseService, Keys } from "koishi"
 import { UUID } from "../utils/UUID.util"
+import { PaimonCharacter, PaimonUid, UserData, UserUID } from "./database"
 
 declare module 'koishi' {
     interface Tables {
@@ -12,51 +12,11 @@ declare module 'koishi' {
         active_uid: string
         characet_id: number[]
     }
-}
-
-export interface UserData {
-    uuid: string
-    active_uid: UID | null
-    characet_id: number[]
-    uid: {
-        [K in UID]: UserUID
+    
+    interface Context {
+        //
+        // db: PaimonDatabase
     }
-}
-
-export interface UserUID {
-    dsalt: string
-    cookie: string | null
-    freeze: boolean
-}
-
-export interface PaimonUid {
-    uid: number | `${number}`
-    uuid: string
-    dsalt: string
-    cookie: string
-    freeze: boolean //并不是冻结了，准确来说是撞到验证码了，标记为冻结而略过请求。
-}
-
-export namespace PaimonUid {
-    export type Field = keyof PaimonUid
-    export const fields: Field[] = []
-    export type Observed<K extends Field = Field> = utils.Observed<Pick<User, K>, Promise<void>>
-}
-
-export interface PaimonCharacter {
-    cuid: number
-    id: number
-    icon?: string
-    image?: string
-    name: string
-    element: string
-    fetter: number
-    level: number
-    rarity: number
-    actived_constellation_num: number
-    weapon?: Weapon
-    reliquaries?: Reliquaries[]
-    constellations?: Constellations[]
 }
 
 export class Database {
