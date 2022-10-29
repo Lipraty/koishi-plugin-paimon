@@ -2,15 +2,8 @@ import { Schema } from "koishi"
 
 declare module 'koishi' {
     namespace Context {
-        interface Config extends PaimonConfig {
-
-        }
+        interface Config extends PaimonConfig { }
     }
-}
-
-interface characterOptions {
-    panelApi: any
-    roles: string
 }
 
 export interface PaimonConfig {
@@ -22,6 +15,11 @@ export interface PaimonConfig {
     pushCount: number
     character: characterOptions
     taskPoolTimer: number
+}
+
+interface characterOptions {
+    panelApi: any
+    roles: string
 }
 
 export const PaimonConfig: Schema<PaimonConfig> = Schema.object({
