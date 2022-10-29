@@ -1,5 +1,7 @@
 import { Channel, Command, Context, FieldCollector, User } from "koishi"
-import { PaimonUid } from "./interface"
+import { PaimonUid } from "../database/database"
+
+declare module "koishi" {}
 
 export class PaimonCommand<U extends User.Field = never, G extends Channel.Field = never, P extends PaimonUid.Field = never, A extends any[] = any[], O extends {} = {}> extends Command<U, G, A, O> {
     constructor(name: string, decl: string, ctx: Context) {
