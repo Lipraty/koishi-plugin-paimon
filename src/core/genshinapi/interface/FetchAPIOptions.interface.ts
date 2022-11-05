@@ -1,3 +1,9 @@
+interface APIFetchObject{
+    baseURL: string
+    url: string
+    method: 'POST' | 'post' | 'GET' | 'get'
+    headers: Record<string, string | number | boolean>
+}
 /**
  * Modified from 'RequestInit'
  */
