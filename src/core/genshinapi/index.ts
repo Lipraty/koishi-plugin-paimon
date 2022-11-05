@@ -14,8 +14,6 @@ export class GenshinAPI {
     public hoyoKit: Hoyo
 
     constructor(uid: string, cookie?: string) {
-        this.uid = uid
-        this.cookie = cookie
         this.serverType = getServerType(uid)
         this.hoyoKit = new Hoyo(uid)
     }

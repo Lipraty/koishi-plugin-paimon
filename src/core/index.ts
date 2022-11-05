@@ -2,12 +2,6 @@ import { Logger, Service } from "koishi";
 import { GenshinAPI } from "./genshinapi";
 import { GachaCore } from "./gacha";
 
-declare module 'koishi' {
-    interface Context {
-        paimon?: Paimon.API
-    }
-}
-
 const logger = new Logger('paimonAPI')
 
 export namespace Paimon {
