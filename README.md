@@ -11,43 +11,6 @@ A [koishi](https://github.com/koishijs/koishi) plugin for a certain anime game.
 
 </div>
 
-## 快速使用
-
-由于paimon只是koishi中的插件，如果您需要一个完整的机器人，可以根据下列步骤快速搭建
-> 可以参考Koishi官方制作的[novelai插件安装视频教程](https://www.bilibili.com/video/BV1Cm4y1A7X7/?t=35.1)来安装paimon插件
-
-### 1. 下载并运行Koishi
-- 1.1 在Windows/macOS上运行：
-  - [点击下载Koishi桌面版](https://github.com/koishijs/koishi-desktop/releases/latest)
-  - 启动Koishi桌面版，将会在浏览器看到一个控制面板
-  - 点击控制面板中的「浏览插件」
-- 1.2 在Android上运行：
-  - [点击下载Koishi手机版](https://github.com/koishijs/koishi-android/releases/latest)
-  - 打开Koishi手机版，点击「管理koishi」后点击「启动koishi」
-  - 等待koishi启动完成后，返回到主界面，点击「启动Console」进入管理界面
-  - 点击控制面板中的「浏览插件」
-- 1.3 搜索`paimon`并点击添加，等待依赖更新完成
-
-### 2. 启用paimon插件
-
-- 在左侧菜单栏中找到「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.plugin.svg" alt="plugin"> 插件配置」，点击「待添加」，在插件选择下拉框中找到`paimon`
-- 正常来说，paimon的默认配置已经足够使用，点击右上角「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.startplugin.svg" alt="startplugin"> 启用插件」便可
-
-这样，您可以在Koishi沙盒中测试使用paimon了。如果需要进一步使用QQ，可继续下列步骤：
-
-### 3. 在Koishi中登录QQ
-
-- 准备一个QQ账号
-- 在左侧菜单栏中找到「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.plugin.svg" alt="plugin"> 插件配置」，点击进入
-- 选择“adapter-pnebot”，完成下列配置：
-  - 在`selfId`填写QQ号
-  - 在`password`中填写QQ账号密码
-  - 在`protocol`中选择“ws-reverse”
-  - 将`gocqhttp.enable`选项打开
-- 点击右上角「 <img width="12" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/koishi.startplugin.svg" alt="startplugin"> 启用插件」
-  
-现在，你可以在QQ中使用paimon了，和机器人账号发送`paimon`或`#派蒙`获取详细用法吧！
-
 ## 安装
 
 ```Shell
@@ -76,16 +39,28 @@ npm install koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/p
 yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plugin-rate-limit
 ```
 
-## 开发计划与进度
+## Paimon 服务
 
-[see plan](https://github.com/Lipraty/koishi-plugin-paimon/issues?q=is%3Aissue+is%3Aopen+label%3Aplan)
+> 通过`ctx.paimon`访问
 
-## 命令使用
+#### `paimon.login(uid, cookie?): Paimon`
 
-插件命令以`paimon`开头，唯一参数为`[uid]`，随后可接额外的选项与参数。
+- uid: 游戏uid
+
+#### `paimon.bbsSign(onlyInfo?): Promise<SignInfo>`
+
+- onlyInfo: 只返回当天签到信息，不执行签到
+
+执行米游社签到
+
+## Paimon 命令
+
+插件命令以`paimon`开头，部分命令拥有参数`[uid]`，随后可接额外的选项与参数。
+
+> 使用命令需要在插件设置中将 `useCommand` 设置为`true`。
 
 ```Shell
-paimon [uid] --options [option arg]
+paimon[.subcommand] [uid] --option [option arg]
 ```
 
 > 具体用法可以发送`paimon -h`查看
@@ -94,7 +69,5 @@ paimon [uid] --options [option arg]
 
 - 指定的`[uid]`只能是已绑定的uid，如果未绑定该uid，则返回非绑定uid警告。
 - 当用户权限大于等于`master`选项所设置数值时，将无视限制。
-
-插件有一个子命令`paimon.bind`，该命令用于绑定用户cookie等敏感信息，因而仅在私聊下才会生效。
 
 All game data & pictures from ©mihoyo
