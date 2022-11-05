@@ -23,17 +23,26 @@ const api = GenshinAPI('0000', 'cookie...');
  * 当然，一般情况下可以使用已经封装好的API，这样也会获得更好的代码提示。
  * 下面这个例子是一个‘米游社’签到API
  */
-api.fetchAPI({
-    type: 'takumi',
-    method: 'GET',
-    url: '/event/bbs_sign_reward/sign',
-    params: ['act_id', 'region', 'uid'],
-    cookie: true
-}, {
-    act_id: this.act_id,
-    region: this.stype,
-    uid: this.uid
-});
+api.useAPI({
+        type: 'takumi',
+        method: 'GET',
+        url: '/event/bbs_sign_reward/sign',
+        params: ['act_id', 'region', 'uid'],
+        cookie: true
+    })
+    .fetch({
+        act_id: api.hoyo.act_id,
+        region: api.region,
+        uid: uid
+    });
+/**
+ * 如果请求已有的api，可以这样
+ */
+api.useAPI('bbsSign').fetch({
+        act_id: api.hoyo.act_id,
+        region: api.region,
+        uid: uid
+    });
 ```
 
 ## 鸣谢

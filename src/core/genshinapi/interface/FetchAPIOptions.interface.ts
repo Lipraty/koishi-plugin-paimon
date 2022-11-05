@@ -1,7 +1,7 @@
 interface APIFetchObject{
     baseURL: string
     url: string
-    method: 'POST' | 'post' | 'GET' | 'get'
+    data?: any
     headers: Record<string, string | number | boolean>
 }
 /**

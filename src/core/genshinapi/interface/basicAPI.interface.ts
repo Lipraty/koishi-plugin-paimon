@@ -5,7 +5,13 @@ interface BasicAPI {
     takumiURL: URL | string
     hk4eURL: URL | string
     recordURL: URL | string
-    apis: Record<string, APIOption>
+    apis: APIList
+}
+interface APIList {
+    bbsSign: APIOption
+    bbsSignHome: APIOption
+    bbsSignInfo: APIOption
+    dailyNote: APIOption
 }
 /**
  * API请求对象选项
