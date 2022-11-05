@@ -1,5 +1,6 @@
-import { DatabaseService, Context } from "koishi"
+import { Context, Argv } from "koishi"
 import * as utils from "@koishijs/utils"
+import { UUID } from "../utils/UUID.util"
 
 declare module 'koishi' {
     interface Tables {
@@ -43,32 +44,23 @@ export interface PaimonCharacter {
     constellations?: Constellations[]
 }
 
-export interface UserData {
-    uuid: string
-    active_uid: UID | null
-    characet_id: number[]
-    uid: {
-        [K in UID]: UserUID
-    }
+export namespace PaimonCharacter {
+    export type Field = keyof PaimonCharacter
+    export const fields: Field[] = []
+    export type Observed<K extends Field = Field> = utils.Observed<Pick<PaimonCharacter, K>, Promise<void>>
 }
 
-export interface UserUID {
-    dsalt: string
-    cookie: string | null
-    freeze: boolean
-}
-
-export class PaimonDatabase extends DatabaseService {
+export class PaimonDatabase {
+    private context: Context
     constructor(app: Context) {
-        super(app)
         //#region extend database
-        this.extend('user', {
+        app.model.extend('user', {
             uuid: 'text',
             active_uid: 'string',
             characet_id: 'list'
         })
 
-        this.extend('paimon_uid', {
+        app.model.extend('paimon_uid', {
             uid: 'string',
             uuid: 'text',
             dsalt: 'text',
@@ -79,7 +71,7 @@ export class PaimonDatabase extends DatabaseService {
             unique: ['uid']
         })
 
-        this.extend('paimon_character', {
+        app.model.extend('paimon_character', {
             cuid: 'unsigned',
             id: 'integer',
             icon: 'text',
@@ -99,6 +91,36 @@ export class PaimonDatabase extends DatabaseService {
             unique: ['cuid']
         })
         //#endregion
+        app.before('command/execute', async (argv: Argv) => {
+            //Try create `uuid` when starting `before-paimon` lifecycle
+            const user = await argv.session.observeUser(['uuid', 'id'])
+            user.uuid ??= this.createUUID(user.id)
+            user.$update()
+        }, true)
 
+        this.context = app
+    }
+
+    db() {
+        return this.context.database
+    }
+
+    createUUID(userId: string): string {
+        const uuid = UUID.snameUUIDFromBytes('koishi:' + userId).unsign()
+        this.context.database.set('user', { id: userId }, { uuid })
+        return uuid
+    }
+
+    async createUid(uid: UID, cookie?: string) {
+        const dsalt = UUID.randomUUID().unsign()
+        return await this.context.database.create('paimon_uid', { uid, cookie, dsalt, freeze: false })
+    }
+
+    async getUid(uuid: string): Promise<PaimonUid[]> {
+        return await this.context.database.get('paimon_uid', { uuid })
+    }
+
+    async setUid(uid: UID, cookie?: string, dsalt?: string, freeze: boolean = false): Promise<void> {
+        await this.context.database.set('paimon_uid', { uid }, { cookie, dsalt, freeze })
     }
 }
