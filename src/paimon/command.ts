@@ -2,6 +2,7 @@ import { Argv, Command, Context, segment, Session } from "koishi"
 import Paimon from ".."
 import { objectify, uidStringifyMap, vertifyUid } from "../utils/Uid.util"
 import { UUID } from "../utils/UUID.util"
+import { isEmpty } from "../utils/Object.util"
 import { PaimonDatabase, PaimonUid } from "./database"
 
 declare module 'koishi' {
