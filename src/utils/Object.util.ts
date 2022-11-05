@@ -10,3 +10,7 @@ declare interface Object {
 Object.prototype.$isEmpty = (o: object) => {
     return Object.keys(o).length === 0
 }
+
+function isEmpty(o: object) {
+    return Object.keys(o).length === 0
+}
