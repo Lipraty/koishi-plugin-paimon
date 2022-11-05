@@ -94,7 +94,7 @@ export class PaimonDatabase {
         app.before('command/execute', async (argv: Argv) => {
             //Try create `uuid` when starting `before-paimon` lifecycle
             const user = await argv.session.observeUser(['uuid', 'id'])
-            user.uuid ??= this.createUUID(user.id)
+            user.uuid ??= this.createUUID(user.id.toString())
             user.$update()
         }, true)
 
@@ -107,7 +107,7 @@ export class PaimonDatabase {
 
     createUUID(userId: string): string {
         const uuid = UUID.snameUUIDFromBytes('koishi:' + userId).unsign()
-        this.context.database.set('user', { id: userId }, { uuid })
+        this.context.database.set('user', { id: parseInt(userId) }, { uuid })
         return uuid
     }
 

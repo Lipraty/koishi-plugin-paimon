@@ -34,7 +34,7 @@ export class PaimonCommand {
             .option('sign', '-s 进行米游社每日签到')
             .option('list', '-l 列出已绑定的uid列表')
             .before(async ({ options, session }, uid) => {
-                if (!Object.$isEmpty(options)) return await this.before(uid, session)
+                if (!isEmpty(options)) return await this.before(uid, session)
             })
             .action(async ({ options, session }, uid) => {
                 uid ??= session.user.active_uid
@@ -61,7 +61,7 @@ export class PaimonCommand {
             .option('user', '-u [user:user] @用户以共享该uid', { hidden: true })
             .option('device', '重置该uid的虚拟设备信息以尝试解除验证码风控')
             .action(async ({ options, session }, uid) => {
-                const uuid = db.createUUID(session.user.id)
+                const uuid = db.createUUID(session.user.id.toString())
                 let uidList: PaimonUid[] = await db.getUid(uuid)
                 let __flag_frist: boolean = false
 
@@ -212,7 +212,7 @@ export class PaimonCommand {
 
     private async before(uid, session: Session) {
         const user = await session.observeUser(['active_uid', 'authority', 'characet_id', 'id', 'uuid'])
-        const uuid = this.database.createUUID(user.id)
+        const uuid = this.database.createUUID(user.id.toString())
         const uidList: PaimonUid[] = await this.ctx.database.get('paimon_uid', { uuid })
 
         if (uid && uidList.findIndex(u => u.uid === uid as UID) < 0 && !this.incudeUid(uid as UID)) {
