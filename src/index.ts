@@ -30,6 +30,10 @@ class Paimon extends Service {
         ctx.plugin(PaimonCommand)
     }
 
+    static create(uid: UID, cookie?: string): GenshinAPI {
+        return new GenshinAPI(uid, cookie)
+    }
+
     login(uid: UID, cookie?: string) {
         this.api = new GenshinAPI(uid.toString(), cookie)
         this._uid = uid

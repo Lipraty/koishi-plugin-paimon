@@ -41,17 +41,53 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 
 ## Paimon 服务
 
-> 通过`ctx.paimon`访问
+通过`ctx.paimon`访问
 
-#### `paimon.login(uid, cookie?): Paimon`
+#### `paimon.login(uid, cookie?, dsalt?): Paimon`
 
-- uid: 游戏uid
+在使用其他api前应当先进行login，传入必要的参数以保证符合预期执行
+
+| Params  | Description            |
+| ------- | ---------------------- |
+| uid     | 游戏uid                |
+| cookie? | 米游社Cookie           |
+| dsalt?  | 虚拟设备信息所用的Salt |
+
+#### `paimon.useImage(def, elementType?)(...args): Promise<string | Buffer | h>`
+
+请求后续所列出的API，并渲染为图片返回
+
+> 这是一个柯里化的函数，第二个`(...args)`则是下列函数可能需要的参数。并根据elementType返回一个流动的`Promise<T>`\
+> 例如：`paimon.useImage('bbsSign', 'base64')(true)`。
+
+| Params       | Description                                                                            |
+| ------------ | -------------------------------------------------------------------------------------- |
+| def          | 下列所列出的函数名                                                                     |
+| elementType? | 返回类型，默认为buffer（`base64` -> `string`，`buffer` -> `Buffer`, `element` -> `h`） |
+
 
 #### `paimon.bbsSign(onlyInfo?): Promise<SignInfo>`
 
-- onlyInfo: 只返回当天签到信息，不执行签到
-
 执行米游社签到
+
+| Params    | Description                    |
+| --------- | ------------------------------ |
+| onlyInfo? | 不执行签到行为，只返回签到数据 |
+
+#### `paimon.memo(): Promise<MemeInfo>`
+
+查询米游社 每日便笺 内容
+
+#### `paimon.abyss(period?, level?)`
+
+查询米游社 深境螺旋 内容
+
+| Params  | Description              |
+| ------- | ------------------------ |
+| period? | 选择回顾上期或本期的战报 |
+| level?  | 单独限制该层信息         |
+
+
 
 ## Paimon 命令
 
@@ -69,5 +105,7 @@ paimon[.subcommand] [uid] --option [option arg]
 
 - 指定的`[uid]`只能是已绑定的uid，如果未绑定该uid，则返回非绑定uid警告。
 - 当用户权限大于等于`master`选项所设置数值时，将无视限制。
+
+当然，为了方便使用，插件支持以快捷方式触发命令，发送`paimon`或`#帮助`即可获得一个支持的命令列表图片。就像Yunzai-bot一样。
 
 All game data & pictures from ©mihoyo
