@@ -1,7 +1,8 @@
-import { Schema } from "koishi"
+import { Schema, Time } from "koishi"
 
 export interface PaimonBasicConfig {
     render: string
+    renderTimeout: number
     cookies: string[]
     character: characterOptions
     taskPoolTimer: number
@@ -22,6 +23,7 @@ interface characterOptions {
 
 export const PaimonBasicConfig: Schema<PaimonBasicConfig> = Schema.object({
     render: Schema.string().default('https://paimon-display.app.lonay.me').description('图片渲染所用地址，可以自行部署到本地获得最快速度'),
+    renderTimeout: Schema.natural().role('ms').default(Time.second * 5).description('渲染图片最长时间。'),
     cookies: Schema.array(String).default([]).description('用于公共查询的米游社小饼干，可以为多个'),
     character: Schema.object({
         panelApi: Schema.union(['Enka', 'Enka-CNproxy', 'Enka-KRproxy']).default('Enka').description('选择面板请求API'),
