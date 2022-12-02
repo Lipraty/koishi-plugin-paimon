@@ -13,6 +13,8 @@ declare module 'koishi' {
 
 type PaimonExclude = 'useImage' | 'caller' | 'pptrLoaded' | 'login' | 'config' | 'ctx'
 type ImageElementType = 'base64' | 'buffer' | 'element'
+type EleTypeFloat<E> = E extends 'base64' ? string : E extends 'buffer' ? Buffer : E extends 'element' ? h : E
+type ImageCurring<P extends (...args: any) => any, E extends ImageElementType> = (...args: Parameters<P>) => Promise<EleTypeFloat<E>>
 
 class Paimon extends Service {
     public static using = ['database', 'puppeteer']
@@ -85,7 +87,7 @@ class Paimon extends Service {
      * @param def 要导入的api函数
      * @param elementType 决定返回元素的类型，默认为`buffer`
      */
-    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, elementType?: ImageElementType): (...args: P) => Promise<string | Buffer | h>
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, E extends ImageElementType>(def: K, elementType?: E): ImageCurring<this[K], E>
     /**
      * 导入某个api，并将结果渲染为图片
      * @param def 要导入的api函数
@@ -93,9 +95,9 @@ class Paimon extends Service {
      * @param y 图片高度，默认800px
      * @param elementType 决定返回元素的类型，默认为`buffer`
      */
-    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, x?: number, y?: number, elementType?: ImageElementType): (...args: P) => Promise<string | Buffer | h>
-    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, xOrElement?: number | ImageElementType, y: number = 800, elementType: ImageElementType = 'buffer'): (...args: P) => Promise<string | Buffer | h> {
-        return async (...args: Parameters<this[K]>) => {
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, E extends ImageElementType>(def: K, x?: number, y?: number, elementType?: E): ImageCurring<this[K], E>
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, E extends ImageElementType>(def: K, xOrElement?: number | E, y: number = 800, elementType?: E): ImageCurring<this[K], E> {
+        return async (...args: Parameters<this[K]>): Promise<any> => {
             const x = typeof xOrElement === 'number' ? xOrElement : 350
             if (typeof xOrElement !== 'number')
                 elementType = xOrElement
@@ -127,7 +129,6 @@ class Paimon extends Service {
                 throw new Error(`Failed rendering ${def}'s image.`)
             }
             const imageBuffer = await page.screenshot({ fullPage: true })
-            //    ^?
             switch (elementType) {
                 case 'base64':
                     return imageBuffer.toString('base64')
