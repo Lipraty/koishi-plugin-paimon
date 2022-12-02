@@ -1,9 +1,9 @@
-import { Context, Schema, Service } from "koishi"
+import { Context, Logger, Schema, Service, h, segment } from "koishi"
 import '@koishijs/plugin-help'
 import { PaimonBasicConfig, PaimonCommandConfig } from "./paimon"
 import { GenshinAPI } from "./core"
-import { PaimonCommand } from "./paimon/command"
-import puppeteer from "koishi-plugin-puppeteer"
+import PaimonCommand from "./paimon/command"
+import { } from "koishi-plugin-puppeteer"
 
 declare module 'koishi' {
     interface Context {
@@ -11,20 +11,21 @@ declare module 'koishi' {
     }
 }
 
+type PaimonExclude = 'useImage' | 'caller' | 'pptrLoaded' | 'login' | 'config' | 'ctx'
+type ImageElementType = 'base64' | 'buffer' | 'element'
+
 class Paimon extends Service {
+    public static using = ['database', 'puppeteer']
     private api: GenshinAPI
     private _uid: UID
     private _cookie: string
-    private pptr: puppeteer
+    private logger: Logger
+    private pptrLoaded: boolean = false
 
-    constructor(ctx: Context, public config: Paimon.Config) {
+    constructor(public ctx: Context, public config: Paimon.Config) {
         super(ctx, 'paimon', true)
-        ctx.using(['database', 'puppeteer'], () => {
-            if (config.useCommand) {
-                this.pptr = ctx.puppeteer
-                new PaimonCommand(ctx, config)
-            }
-        })
+        this.logger = ctx.logger('paimon')
+        ctx.plugin(PaimonCommand)
     }
 
     login(uid: UID, cookie?: string) {
@@ -36,7 +37,6 @@ class Paimon extends Service {
 
     /**
      * 执行米游社每日签到
-     * @param uid 游戏uid
      * @param onlyInfo 只获取当天信息，不进行签到
      */
     async bbsSign(onlyInfo: boolean = false): Promise<SignInfo> {
@@ -82,14 +82,61 @@ class Paimon extends Service {
 
     /**
      * 导入某个api，并将结果渲染为图片
-     * @param def 
-     * @param x 图片宽度
-     * @param y 图片高度
+     * @param def 要导入的api函数
+     * @param elementType 决定返回元素的类型，默认为`buffer`
      */
-    async useImage<K extends keyof Paimon>(def: K, x?: number, y?: number): Promise<string | Buffer | ArrayBuffer> {
-        const api = this[def]
-        const desktopURL = this.config.render
-        return
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, elementType?: ImageElementType): (...args: P) => Promise<string | Buffer | h>
+    /**
+     * 导入某个api，并将结果渲染为图片
+     * @param def 要导入的api函数
+     * @param x 图片宽度，默认350px
+     * @param y 图片高度，默认800px
+     * @param elementType 决定返回元素的类型，默认为`buffer`
+     */
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, x?: number, y?: number, elementType?: ImageElementType): (...args: P) => Promise<string | Buffer | h>
+    useImage<K extends Exclude<keyof Paimon, PaimonExclude>, P extends Parameters<this[K]>>(def: K, xOrElement?: number | ImageElementType, y: number = 800, elementType: ImageElementType = 'buffer'): (...args: P) => Promise<string | Buffer | h> {
+        return async (...args: Parameters<this[K]>) => {
+            const x = typeof xOrElement === 'number' ? xOrElement : 350
+            if (typeof xOrElement !== 'number')
+                elementType = xOrElement
+            const _request = this[def].apply(this, args) as ReturnType<this[K]>
+            const data = await _request
+            if (!data) {
+                throw new Error('the api is not retrun')
+            }
+            //create pptr page
+            const page = await this.ctx.puppeteer.page()
+            page.on('load', () => this.pptrLoaded = true)
+            //
+            try {
+                const url = new URL(this.config.render)
+                url.pathname = def + '?buf=' + Buffer.from(JSON.stringify(data)).toString('base64')
+                await page.setViewport({ width: x, height: y })
+                this.logger.info('[api screenshot] navigating api to ' + def)
+                await new Promise<void>((res, rej) => {
+                    page.goto(url.href, {
+                        waitUntil: 'networkidle0',
+                        timeout: this.config.renderTimeout,
+                    }).then(() => {
+                        return this.pptrLoaded ? res() : rej(new Error('[api screenshot] navigation timeout'))
+                    })
+                })
+            } catch (error) {
+                page.close()
+                this.logger.debug(error)
+                throw new Error(`Failed rendering ${def}'s image.`)
+            }
+            const imageBuffer = await page.screenshot({ fullPage: true })
+            //    ^?
+            switch (elementType) {
+                case 'base64':
+                    return imageBuffer.toString('base64')
+                case 'buffer':
+                    return imageBuffer
+                case 'element':
+                    return segment.image(imageBuffer)
+            }
+        }
     }
 }
 
