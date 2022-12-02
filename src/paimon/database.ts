@@ -55,15 +55,15 @@ export class PaimonDatabase {
     constructor(app: Context) {
         //#region extend database
         app.model.extend('user', {
-            uuid: 'text',
-            active_uid: 'string',
+            uuid: 'text(31)',
+            active_uid: 'string(12)',
             characet_id: 'list'
         })
 
         app.model.extend('paimon_uid', {
-            uid: 'string',
-            uuid: 'text',
-            dsalt: 'text',
+            uid: 'string(12)',
+            uuid: 'text(31)',
+            dsalt: 'text(30)',
             cookie: 'text',
             freeze: { type: 'boolean', initial: false }
         }, {
