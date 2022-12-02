@@ -1,4 +1,4 @@
-import { Argv, Command, Context, segment, Session } from "koishi"
+import { Argv, Command, Context, Schema, segment, Session } from "koishi"
 import Paimon from ".."
 import { objectify, uidStringifyMap, vertifyUid } from "../utils/Uid.util"
 import { UUID } from "../utils/UUID.util"
@@ -20,14 +20,14 @@ Argv.createDomain('UID', source => {
         throw new Error(`"${source}"不是一个正确的uid`)
 })
 
-export class PaimonCommand {
+export default class PaimonCommand {
+    public static using = ['database', 'paimon']
     private database: PaimonDatabase
     private uids: PaimonUid[]
     private master: boolean = false
     constructor(private ctx: Context, private config: Paimon.Config) {
         const db = this.database = new PaimonDatabase(ctx)
         const logger = ctx.logger('paimon')
-
         this.command('paimon', '派蒙！最好的伙伴！')
             .alias('genshin', 'ys', 'gs', 'o')
             .userFields(['active_uid', 'authority', 'id'])
@@ -61,14 +61,14 @@ export class PaimonCommand {
             .option('remove', '-r 移除这个uid（如果使用"-ru @user"则视为移除这个共享用户）')
             .option('user', '-u [user:user] @用户以共享该uid', { hidden: true })
             .option('device', '重置该uid的虚拟设备信息以尝试解除验证码风控')
-            .action(async ({ options, session }, uid) => {
+            .action(async ({ options, session, next }, uid) => {
                 const uuid = db.createUUID(session.user.id.toString())
                 let uidList: PaimonUid[] = await db.getUid(uuid)
                 let __flag_frist: boolean = false
 
-                if (uid && uidList.findIndex(u => u.uid === uid as UID) < 0 && !this.incudeUid(uid as UID)) {
+                if (uid && (uidList.findIndex(u => u.uid === uid as UID) < 0 || this.incudeUid(uid as UID))) {
                     return '这不是你的uid'
-                } else if (uidList.length === 0) {
+                } else if (uidList.length === 0 && !options.bind) {
                     await session.send(uid ? '这个uid还没有绑定过，回复句号以绑定这个uid' : '你还没有绑定过uid，回复uid以绑定第一个uid')
                     const promptMsg = await session.prompt(10 * 1000)
                     if (promptMsg === '.' || promptMsg === '。') {
@@ -78,6 +78,16 @@ export class PaimonCommand {
                         uid = session.user.active_uid = promptMsg
                     } else {
                         return '等待超时。'
+                    }
+                } else if (!uid && options.bind) {
+                    await session.send('未指定要绑定的uid，请回复一个uid以绑定')
+                    const promptUid = await session.prompt(20 * 1000)
+                    if (promptUid && vertifyUid(promptUid)) {
+                        uid = promptUid
+                    } else if (promptUid && !vertifyUid(promptUid)) {
+                        return '这不是一个正确的uid'
+                    } else {
+                        return '等待超时'
                     }
                 } else {
                     uid ??= session.user.active_uid
@@ -89,17 +99,17 @@ export class PaimonCommand {
                     }).join('\n')
                 }
 
-                let sendMsg = ''
+                let sendMsg = '-'
                 let uidTemp: PaimonUid = options.bind ? {
                     uuid,
                     uid,
                     cookie: undefined,
                     dsalt: UUID.randomUUID().unsign(),
                     freeze: false
-                } : Object.assign({ uid, uuid }, objectify(this.uids)[uid])
+                } : Object.assign({ uid, uuid }, objectify(uidList)[uid])
 
                 if (options.bind) {
-                    sendMsg = `已绑定uid(${uid})` + options.cookie ? '和Cookie' : '' + __flag_frist ? '，由于是第一次绑定，该uid已被自动设置为默认uid' : '' + '。'
+                    sendMsg = `已绑定uid(${uid})${options.cookie ? '和Cookie' : ''}${__flag_frist ? '，由于是第一次绑定，该uid已被自动设置为默认uid' : ''}。`
                 } else if (options.remove) {
                     if (uid === session.user.active_uid) {
                         await session.send(uidList.length === 1 ? '只绑定了这一个uid' : '这是一个默认uid' + '，确定移除？（回复句号以确认移除）')
@@ -142,8 +152,9 @@ export class PaimonCommand {
                 await session.send(sendMsg)
                 uidList.push(uidTemp)
                 __flag_frist = false
+                return await next()
             })
-            .use(this.useLast)
+            .use(this.useLast(this.ctx))
 
         this.command('paimon.sign', '进行米游社每日签到', true)
             .alias('paimon.s')
@@ -151,7 +162,7 @@ export class PaimonCommand {
             // .option('autosession', '-- [param]', { hidden: true })
             .action(async ({ session }, uid) => {
                 uid ??= session.user.active_uid
-                const cookie = this.uids[uid as UID].cookie
+                const cookie = objectify(this.uids)[uid as UID].cookie
                 if (!cookie) {
                     return '您的uid还未绑定过cookie！请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以绑定'
                 }
@@ -187,7 +198,7 @@ export class PaimonCommand {
             .option('update', '-u 更新展柜')
             .option('name', '-- [name: string] 获取某个角色的详细信息')
             .action(async () => { })
-            .use(this.useLast)
+            .use(this.useLast(this.ctx))
 
         this.command('paimon.abyss', '获取深境螺旋信息', true)
             .action(async () => { })
@@ -234,10 +245,12 @@ export class PaimonCommand {
         this.uids = uidList
     }
 
-    private useLast(cmd: Command) {
-        return cmd.action(async ({ next }) => {
-            await this.ctx.database.upsert('paimon_uid', this.uids, 'uid')
-            return await next()
+    private useLast(ctx: Context) {
+        const _db = ctx.database
+        return (cmd: Command) => cmd.action(async ({ next }) => {
+            await next()
+            console.log('last: update database.')
+            return await _db.upsert('paimon_uid', this.uids, 'uid')
         })
     }
 }
