@@ -2,7 +2,7 @@ import { Logger } from "koishi"
 import { createHash, randomUUID } from "node:crypto"
 import { DeviceInfo } from "./Device"
 import { Random } from "./Random"
-import { getServerType, ServerType } from "./ServerType"
+import { getServerType, ServerType } from "./Region"
 
 const logger = new Logger('hoyokit')
 
