@@ -6,11 +6,7 @@
 import { createHash } from "crypto"
 
 export class DeviceInfo {
-    private uid: string
-
-    constructor(uid: string) {
-        this.uid = uid
-    }
+    constructor(private uid: string, private dsalt?: string) { }
 
     private calcSP(imei: string) {
         let sum = 0
@@ -45,9 +41,11 @@ export class DeviceInfo {
 
     /**
      * 基于UID生成设备信息，以保证每个UID请求API时是独立的设备信息，并规避单UID多随机设备导致的风控问题。
+     * 
+     * 现已加入DSalt作为可变随机值，以确保device信息可以更新
      */
     public createDevice(): DeviceInformation {
-        const uidKey: Buffer = createHash('md5').update(this.uid).digest()
+        const uidKey: Buffer = createHash('md5').update(this.uid + this.dsalt).digest()
         const ukHex: string = uidKey.toString('hex')
 
         const aid: string = `KOISHI.${Math.trunc(parseInt(ukHex, 16) / 1e+33)}.011`

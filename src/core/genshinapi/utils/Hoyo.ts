@@ -2,7 +2,7 @@ import { Logger } from "koishi"
 import { createHash, randomUUID } from "node:crypto"
 import { DeviceInfo } from "./Device"
 import { Random } from "./Random"
-import { getServerType, ServerType } from "./Region"
+import { RegionType, getRegion } from "./Region"
 
 const logger = new Logger('hoyokit')
 
@@ -36,17 +36,17 @@ const config: Record<'cn' | 'os', HoyoConfig> = {
 }
 
 export class Hoyo {
-    private srvType: 'cn' | 'os'
+    private region: 'cn' | 'os'
     private device: DeviceInformation
     private conf: HoyoConfig
 
     constructor(uid: string) {
-        let serverType = getServerType(uid)
-        if (serverType === ServerType.CN || serverType === ServerType.CNB) {
-            this.srvType = 'cn'
+        let serverType = getRegion(uid)
+        if (serverType === RegionType.CN || serverType === RegionType.CNB) {
+            this.region = 'cn'
             this.conf = config.cn
         } else {
-            this.srvType = 'os'
+            this.region = 'os'
             this.conf = config.os
         }
 
@@ -102,7 +102,7 @@ export class Hoyo {
             'x-rpc-client_type': this.conf.clientType.toString(),
             'cookie': cookie,
             'User-Agent': [Random.randUA(this.device.Display), `${this.conf.header}/${this.conf.appver}`].join(' '),
-            'Referer': this.srvType === 'cn' ? `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${this.act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon` : `https://webstatic-sea.hoyolab.com`,
+            'Referer': this.region === 'cn' ? `https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=${this.act_id}&utm_source=bbs&utm_medium=mys&utm_campaign=icon` : `https://webstatic-sea.hoyolab.com`,
             'DS': this.newDS(query, body)
         }
     }
@@ -119,7 +119,7 @@ export class Hoyo {
             'x-rpc-device_name': this.device.Display,
             'x-rpc-channel': 'miyousheluodi',
             'x-rpc-sys_version': this.device.Version.Release,
-            'X-Requested-With': this.srvType === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
+            'X-Requested-With': this.region === 'cn' ? 'com.mihoyo.hyperion' : 'com.mihoyo.hoyolab'
         })
     }
 
@@ -127,7 +127,7 @@ export class Hoyo {
      * format cookie to object
      * @param cookie 
      */
-    public static cookieFormat(cookie: string): Cookie {
+    public static parseCookie(cookie: string): Cookie {
         //清除空格
         cookie = cookie.replace(/\s/g, '')
         //'key=value;foo=bar' map to [[key,value],[foo,bar]] 
@@ -149,7 +149,7 @@ export class Hoyo {
      * @param cookie 
      */
     public static vertifyCookie(cookie: string): boolean {
-        const ck = this.cookieFormat(cookie)
+        const ck = this.parseCookie(cookie)
         return ck.login_ticket ? true : false
     }
 }

@@ -23,4 +23,4 @@ export type AppServerLocale =
     | 'th-th'
     | 'vi-vn'
 
-export type AppServerType = 'os' | 'cn'
+export type AppRegion = 'os' | 'cn'
