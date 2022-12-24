@@ -49,6 +49,7 @@ export namespace BBSApi {
             parameters: [['role_id', 'string'], ['server', 'string']],
             cookie: true
         },
+        
     } as const
 
     //内置类型工具

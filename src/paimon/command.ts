@@ -40,7 +40,7 @@ export default class PaimonCommand {
             .action(async ({ options, session }, uid) => {
                 uid ??= session.user.active_uid
                 if (options.memo) {
-                    return segment.image(await ctx.paimon.useImage('memo', 'buffer')())
+                    return segment.image(await ctx.paimon.render('memo', 'buffer')())
                 }
 
                 if (options.sign) {

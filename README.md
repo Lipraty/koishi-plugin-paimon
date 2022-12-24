@@ -53,16 +53,16 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 | cookie? | 米游社Cookie           |
 | dsalt?  | 虚拟设备信息所用的Salt |
 
-#### `paimon.useImage(def, elementType?)(...args): Promise<string | Buffer | h>`
+#### `paimon.render(def, elementType?)(...args): Promise<string | Buffer | h>`
 
-请求后续所列出的API，并渲染为图片返回
+请求后续所列出的某个API，并渲染为图片返回
 
 > 这是一个柯里化的函数，第二个`(...args)`则是下列函数可能需要的参数。并根据elementType返回一个流动的`Promise<T>`\
-> 例如：`paimon.useImage('bbsSign', 'base64')(true)`。
+> 例如：`paimon.render('bbsSign', 'base64')(true)`。
 
 | Params       | Description                                                                            |
 | ------------ | -------------------------------------------------------------------------------------- |
-| def          | 下列所列出的函数名                                                                     |
+| def          | 需要请求的API，即下列所列出的函数名                                                    |
 | elementType? | 返回类型，默认为buffer（`base64` -> `string`，`buffer` -> `Buffer`, `element` -> `h`） |
 
 
@@ -74,11 +74,11 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 | --------- | ------------------------------ |
 | onlyInfo? | 不执行签到行为，只返回签到数据 |
 
-#### `paimon.memo(): Promise<MemeInfo>`
+#### `paimon.memo(): Promise<MemoInfo>`
 
 查询米游社 每日便笺 内容
 
-#### `paimon.abyss(period?, level?)`
+#### `paimon.abyss(period?, level?): Promise<AbyssInfo>`
 
 查询米游社 深境螺旋 内容
 
@@ -87,7 +87,17 @@ yarn add koishi-plugin-puppeteer @koishijs/plugin-database-sqlite @koishijs/plug
 | period? | 选择回顾上期或本期的战报 |
 | level?  | 单独限制该层信息         |
 
+#### `paimon.gachaImport(gachaDataJson): Promise<void | boolan>`
 
+导入原神抽卡记录进行分析
+
+| Params        | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| gachaDataJson | 以`gachaData-[uid]-[time].json`文件名的原神祈愿记录（genshin-gacha-export） |
+
+#### `paimon.note(month?): Promise<NoteData>`
+
+查询米游社旅行者札记
 
 ## Paimon 命令
 

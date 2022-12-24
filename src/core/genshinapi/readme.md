@@ -5,44 +5,39 @@
 ## 使用
 
 ```TypeScript
-import { GenshinAPI } from 'genshin/core';
+import { GenshinAPI } from 'koishi-plugin-paimon/core';
 
 /**
  * GenshinAPI实例
  * 传入第一个参数UID。当然，会在内部处理改UID所属区服与API地址等信息。
  * 第二个参数为部分API所需要携带的Cookie。
+ * 第三个参数为虚拟设备信息Device所用生成序列，可以为一个固定随机字符以
+ * 保证唯一性，且可以更新以生成新的Device。
  */
-const api = GenshinAPI('0000', 'cookie...');
-```
+const api = GenshinAPI('0000', 'cookie...', 'jsh823hAhs0');
 
-### 可用函数
-
-```TypeScript
 /**
  * 请求一个API。
- * 当然，一般情况下可以使用已经封装好的API，这样也会获得更好的代码提示。
- * 下面这个例子是一个‘米游社’签到API
+ */
+api.fetch('bbsSign', {
+        act_id: api.hoyo.act_id,
+        region: api.region,
+        uid: uid
+    })
+/**
+ * 如果请求一个列表中不存在的api，或者就单纯进行一次http请求，你可以
+ * 这样
  */
 api.useAPI({
-        type: 'takumi',
-        method: 'GET',
-        url: '/event/bbs_sign_reward/sign',
-        params: ['act_id', 'region', 'uid'],
-        cookie: true
-    })
-    .fetch({
-        act_id: api.hoyo.act_id,
-        region: api.region,
-        uid: uid
-    });
-/**
- * 如果请求已有的api，可以这样
- */
-api.useAPI('bbsSign').fetch({
-        act_id: api.hoyo.act_id,
-        region: api.region,
-        uid: uid
-    });
+    type: 'takumi',
+    method: 'POST',
+    url: '/event/unexpected/api',
+    params:['act_id', 'param1'],
+    cookie: false
+}).fetch({
+    act_id: api.hoyo.act_id,
+    param1: 'a param'
+});
 ```
 
 ## 鸣谢

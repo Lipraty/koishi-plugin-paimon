@@ -24,7 +24,7 @@ interface APIOption {
     /**如果type为undefined，应该提供完整URL。*/
     url: string
     /**限制请求参数（GET:Query|POST:Body）*/
-    params?: Array<string>
+    params?: readonly string[]
     /**这个API是否需要cookie */
     cookie?: boolean
 }
