@@ -56,10 +56,16 @@ export namespace BBSApi {
     type ApiList = keyof typeof stencil
     type AvailableRegions = keyof typeof region
     type AvailableUnion<K extends ApiList> = typeof stencil[K]['availableFor'][number]
+    type TyperX<N extends string> = N extends 'string' ? string : N extends 'number' ? number : N extends 'boolean' ? boolean : N extends 'object' ? object : unknown;
 
     export type RegionTypeOf<R extends RegionType> = R extends RegionType.CN | RegionType.CNB ? 'china' : 'overseas'
     export type For<R extends AvailableRegions> = {
         [K in ApiList as R extends AvailableUnion<K> ? K : never]: typeof stencil[K]
     }
-    export type Keys<R extends AvailableRegions> = keyof For<R>
+    export type Keys<R extends RegionType> = keyof For<RegionTypeOf<R>>
+    export type Params<Api extends ApiList, T extends typeof stencil[Api]['parameters'][number] = typeof stencil[Api]['parameters'][number]> = {
+        [K in T[0]]: TyperX<T[1]>
+    }
+
+    type t = Params<'bbsSign'>
 }
