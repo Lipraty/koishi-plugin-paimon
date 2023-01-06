@@ -1,40 +1,39 @@
+import { BBSApi } from './api-bbs';
 import { Hoyo } from './utils/Hoyo';
 import { getRegion, Region, RegionType, RegionTyper } from "./utils/Region";
-export class GenshinAPI<U extends `${number}`, R extends RegionTyper = Region<U>> {
-    private _cookie: string
-    private _region: R
-    private _hoyoKit: Hoyo
-    private _apiParams: string[]
-    private _apiMethod: "POST" | "post" | "GET" | "get"
-    private _apiFetchObject: APIFetchObject
+export class GenshinAPI<U extends `${number}` = '10000', R extends RegionTyper = Region<U>> {
+    #cookie: string
+    #region: R
+    #hoyoKit: Hoyo
 
     constructor(uid: U, cookie?: string) {
-        this._cookie = cookie
-        this._region = getRegion(uid) as R
-        this._hoyoKit = new Hoyo(uid)
+        this.#cookie = cookie
+        this.#region = getRegion(uid) as R
+        this.#hoyoKit = new Hoyo(uid)
     }
 
-    public get region() {
-        return this._region
+    get region() {
+        return this.#region
     }
 
-    public get hoyo() {
-        return this._hoyoKit
+    get hoyo() {
+        return this.#hoyoKit
     }
 
-    public fetch<Api extends keyof RegionAPI<R>, Params extends Record<RegionAPI<R>[Api]['params'][number],any>>(api: Api, params: Params) {
-        const thisApi = ((this._region === RegionType.CN || this._region === RegionType.CNB) ? ChinaAPI : OverseasAPI)['apis'][api.toString()]
-        let host: URL | string, body: any, qury: any
+    async fetch<Api extends BBSApi.Keys<R>, Params extends BBSApi.Params<R, Api>>(api: Api, params: Params): Promise<any> {
+        const regionURL = BBSApi.region[this.#region === RegionType.CN || this.#region === RegionType.CNB ? 'china' : 'overseas']
+        const thisApi: APIStencilOption = BBSApi.stencil[api.toString()]
+        let host: URL | string, body: Params, qury: string
         if (thisApi.type) {
-            host = new URL(thisApi[`${thisApi.type}URL`])
+            host = new URL(regionURL[`${thisApi.type}`])
             host.pathname = thisApi.url
         } else host = new URL(thisApi.url)
-        this._apiParams = thisApi.params
+        this._apiParams = thisApi.parameters
         this._apiMethod = thisApi.method
         this._apiFetchObject = {
             baseURL: host.origin,
             url: host.pathname,
-            headers
+            // headers
         }
         return this
     }
@@ -57,5 +56,3 @@ export class GenshinAPI<U extends `${number}`, R extends RegionTyper = Region<U>
     //     return (await axios(this._apiFetchObject)).data as any
     // }
 }
-
-export { ChinaAPI, OverseasAPI }

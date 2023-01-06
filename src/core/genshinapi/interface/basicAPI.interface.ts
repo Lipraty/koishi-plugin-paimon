@@ -1,18 +1,39 @@
 /**
  * 基本API请求列表。
  */
-interface BasicAPI {
-    takumiURL: URL | string
-    hk4eURL: URL | string
-    recordURL: URL | string
-    apis: APIList
+type APIStencil = {
+    readonly [K in string]: APIStencilOption
 }
+
+type APIRegion = {
+    readonly [K in string]: APIRegionOption
+}
+
+interface APIStencilOption {
+    readonly availableFor: readonly ('china' | 'overseas')[]
+    readonly type: APIType
+    readonly method: APIRequestMethod
+    readonly url: string
+    readonly parameters: readonly (readonly [string, string])[]
+    readonly cookie: boolean
+}
+
+interface APIRegionOption {
+    readonly takumi: string
+    readonly hk4e: string
+    readonly record: string
+}
+
+type APIRequestMethod = 'GET' | 'get' | 'POST' | 'post' | 'PUT' | 'put'
+type APIType = keyof APIRegionOption
+
 interface APIList {
     bbsSign: APIOption
     bbsSignHome: APIOption
     bbsSignInfo: APIOption
     dailyNote: APIOption
 }
+
 /**
  * API请求对象选项
  */
