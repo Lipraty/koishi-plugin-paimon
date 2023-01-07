@@ -11,7 +11,7 @@ type APIRegion = {
 
 interface APIStencilOption {
     readonly availableFor: readonly ('china' | 'overseas')[]
-    readonly type: APIType
+    readonly type?: APIType
     readonly method: APIRequestMethod
     readonly url: string
     readonly parameters: readonly (readonly [string, string])[]
@@ -24,7 +24,7 @@ interface APIRegionOption {
     readonly record: string
 }
 
-type APIRequestMethod = 'GET' | 'get' | 'POST' | 'post' | 'PUT' | 'put'
+type APIRequestMethod = 'GET' | 'POST'
 type APIType = keyof APIRegionOption
 
 interface APIList {
