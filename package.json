@@ -2,7 +2,7 @@
   "name": "koishi-plugin-paimon",
   "description": "A koishi plugin for a certain anime game.",
   "private": false,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
@@ -46,7 +46,7 @@
   },
   "peerDependencies": {
     "@koishijs/plugin-help": "^1.2.5",
-    "koishi": "^4.10.4",
+    "koishi": "^4.11.0",
     "koishi-plugin-puppeteer": "^3.0.2"
   },
   "dependencies": {
