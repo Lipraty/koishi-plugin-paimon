@@ -22,13 +22,16 @@ export class GenshinAPI<U extends `${number}` = '10000', R extends RegionTyper =
     }
 
     async fetch<Api extends BBSApi.Keys<R>, Params extends BBSApi.Params<R, Api>>(api: Api, params: Params, sign: boolean = false): Promise<any> {
-        const regionURL = BBSApi.region[this.#region === RegionType.CN || this.#region === RegionType.CNB ? 'china' : 'overseas']
+        const region = this.#region === RegionType.CN || this.#region === RegionType.CNB ? 'china' : 'overseas'
+        const regionURL = BBSApi.region[region]
         const thisApi: APIStencilOption = BBSApi.stencil[api.toString()]
         let host: URL, body: BodyInit, qury: string
-        if (thisApi.type) {
-            host = new URL(regionURL[`${thisApi.type}`])
-            host.pathname = thisApi.url
-        } else host = new URL(thisApi.url)
+        if (thisApi.hostBy) {
+            host = new URL(regionURL[`${typeof thisApi.hostBy === 'string' ? thisApi.hostBy : thisApi.hostBy[region]}`])
+            host.pathname = typeof thisApi.url === 'string' ? thisApi.url : thisApi.url[region]
+        } else {
+            host = new URL(typeof thisApi.url === 'string' ? thisApi.url : thisApi.url[region])
+        }
         if (thisApi.method === 'GET') {
             qury = new URLSearchParams(params as unknown as URLSearchParams).toString()
         } else {
