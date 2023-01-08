@@ -11,10 +11,10 @@ type APIRegion = {
 
 interface APIStencilOption {
     readonly availableFor: readonly ('china' | 'overseas')[]
-    readonly type?: APIType
+    readonly hostBy?: APIType | Record<'china' | 'overseas', APIType | undefined>
     readonly method: APIRequestMethod
-    readonly url: string
-    readonly parameters: readonly (readonly [string, string])[]
+    readonly url: string | Record<'china' | 'overseas', string>
+    readonly parameters: readonly (readonly [string, APIParameTyper, boolean?])[]
     readonly cookie: boolean
 }
 
@@ -26,6 +26,7 @@ interface APIRegionOption {
 
 type APIRequestMethod = 'GET' | 'POST'
 type APIType = keyof APIRegionOption
+type APIParameTyper = 'string' | 'number' | 'boolean' | 'json'
 
 interface APIList {
     bbsSign: APIOption
