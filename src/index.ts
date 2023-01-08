@@ -62,7 +62,7 @@ class Paimon extends Service {
     async bbsSign(onlyInfo: boolean = false): Promise<SignInfo> {
         const params = { act_id: this.api.hoyo.act_id, region: this.api.region, uid: this._uid as string }
         if (!onlyInfo) {
-            const doSign = await this.api.useAPI('bbsSign').fetch(params)
+            const doSign = await this.api.fetch('bbsSign', params)
             if (doSign.retcode !== 0 || doSign.data?.risk_code === 375) {
                 throw {
                     code: doSign.data?.risk_code === 375 ? -375 : doSign.retcode,
@@ -71,7 +71,7 @@ class Paimon extends Service {
                 }
             }
         }
-        const checkSign = await this.api.useAPI('bbsSignInfo').fetch(params)
+        const checkSign = await this.api.fetch('bbsSignInfo', params)
         if (checkSign.retcode === 0) {
             return checkSign.data
         } else {
