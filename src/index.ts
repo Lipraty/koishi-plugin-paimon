@@ -154,7 +154,7 @@ class Paimon extends Service {
                 throw new Error(`Failed rendering ${api}'s image.`)
             }
             //codeing buffer
-            const imageBuffer = await page.screenshot({ fullPage: true })
+            const imageBuffer: Buffer = await page.screenshot({ fullPage: true, encoding: 'binary' }) as Buffer
             //    ^?
             switch (elementType) {
                 case 'base64':
@@ -162,7 +162,7 @@ class Paimon extends Service {
                 case 'buffer':
                     return imageBuffer
                 case 'element':
-                    return segment.image(imageBuffer)
+                    return h.image(imageBuffer, 'image/png')
             }
         }
     }

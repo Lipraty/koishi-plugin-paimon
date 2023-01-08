@@ -1,4 +1,4 @@
-import { Argv, Command, Context, Schema, segment, Session } from "koishi"
+import { Argv, Command, Context, h, Session } from "koishi"
 import Paimon from ".."
 import { objectify, uidStringifyMap, vertifyUid } from "../utils/Uid.util"
 import { UUID } from "../utils/UUID.util"
@@ -40,7 +40,7 @@ export default class PaimonCommand {
             .action(async ({ options, session }, uid) => {
                 uid ??= session.user.active_uid
                 if (options.memo) {
-                    return segment.image(await ctx.paimon.render('memo', 'buffer')())
+                    return h.image(await ctx.paimon.render('memo', 'buffer')(), 'image/png')
                 }
 
                 if (options.sign) {
