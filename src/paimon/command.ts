@@ -1,9 +1,9 @@
 import { Argv, Command, Context, h, Session } from "koishi"
 import Paimon from ".."
-import { objectify, uidStringifyMap, vertifyUid } from "../utils/Uid.util"
+import { uidStringifyMap } from "../utils/Uid.util"
 import { UUID } from "../utils/UUID.util"
 import { isEmpty } from "../utils/Object.util"
-import { PaimonDatabase, PaimonUid } from "./database"
+import { PaimonDatabase, PaimonUid, PaimonUidObject } from "./database"
 
 declare module 'koishi' {
     namespace Argv {
@@ -19,6 +19,8 @@ Argv.createDomain('UID', source => {
     else
         throw new Error(`"${source}"不是一个正确的uid`)
 })
+
+let __uidTemp: PaimonUid[] = []
 
 export default class PaimonCommand {
     public static using = ['database', 'paimon']
@@ -63,76 +65,92 @@ export default class PaimonCommand {
             .option('device', '重置该uid的虚拟设备信息以尝试解除验证码风控')
             .action(async ({ options, session, next }, uid) => {
                 const uuid = db.createUUID(session.user.id.toString())
-                let uidList: PaimonUid[] = await db.getUid(uuid)
-                let __flag_frist: boolean = false
+                __uidTemp = await db.getUid(uuid)
+                let __flagNoneUid: boolean = __uidTemp.length <= 0
 
-                if (uid && (uidList.findIndex(u => u.uid === uid as UID) < 0 || this.incudeUid(uid as UID))) {
-                    return '这不是你的uid'
-                } else if (uidList.length === 0 && !options.bind) {
-                    await session.send(uid ? '这个uid还没有绑定过，回复句号以绑定这个uid' : '你还没有绑定过uid，回复uid以绑定第一个uid')
-                    const promptMsg = await session.prompt(10 * 1000)
-                    if (promptMsg === '.' || promptMsg === '。') {
-                        options.bind = true
-                    } else if (vertifyUid(promptMsg)) {
-                        __flag_frist = options.bind = true
-                        uid = session.user.active_uid = promptMsg
+                if (uid && (await this.incudeUid(uid as UID)) && __uidTemp.findIndex(u => u.uid === uid as UID) < 0) {
+                    return '这个 uid 已经被其他人绑定过了'
+                } else if (__flagNoneUid && !options.bind) {
+                    await session.send(uid ? '这个 uid 还没有被绑定过，回复句号以绑定这个 uid' : '你还没有绑定过 uid ，请先回复一个 uid 进行绑定')
+                    if (uid) {
+                        const waitingDot = this.vertifyPropmt(await session.prompt(10 * 1000), ['.', '。'])
+                        if (waitingDot === 1) {
+                            return '请回复句号'
+                        } else if (waitingDot === 0) {
+                            return '等待超时。'
+                        }
                     } else {
+                        const waitingUid = this.vertifyPropmt(await session.prompt(10 * 1000), [], uid => PaimonUid.vertify(uid))
+                        if (waitingUid === 1) {
+                            return '这不是一个正确的 uid'
+                        } else if (waitingUid === 0) {
+                            return '等待超时。'
+                        }
+                        uid = waitingUid
+                    }
+                    options.bind = true
+                } else if (!uid && options.bind) {
+                    await session.send('未指定要绑定的 uid ，请回复一个 uid 以绑定')
+                    const waitingUid = this.vertifyPropmt(await session.prompt(10 * 1000), [], uid => PaimonUid.vertify(uid))
+                    if (waitingUid === 1) {
+                        return '这不是一个正确的 uid'
+                    } else if (waitingUid === 0) {
                         return '等待超时。'
                     }
-                } else if (!uid && options.bind) {
-                    await session.send('未指定要绑定的uid，请回复一个uid以绑定')
-                    const promptUid = await session.prompt(20 * 1000)
-                    if (promptUid && vertifyUid(promptUid)) {
-                        uid = promptUid
-                    } else if (promptUid && !vertifyUid(promptUid)) {
-                        return '这不是一个正确的uid'
-                    } else {
-                        return '等待超时'
-                    }
+                    uid = waitingUid
                 } else {
                     uid ??= session.user.active_uid
                 }
 
                 if (options.list) {
-                    return '当前已绑定的uid有\n' + uidStringifyMap(session.user.active_uid as UID, uidList, (u, i) => {
-                        return `${i}. ${u}${i === 0 ? '（默认）' : ''}`
+                    return '当前已绑定的 uid 有\n' + uidStringifyMap(session.user.active_uid as UID, __uidTemp, (u, i) => {
+                        return `${i + 1}. ${u}${i === 0 ? '（默认）' : ''}`
                     }).join('\n')
                 }
 
                 let sendMsg = '-'
-                let uidTemp: PaimonUid = options.bind ? {
-                    uuid,
-                    uid,
-                    cookie: undefined,
-                    dsalt: UUID.randomUUID().unsign(),
-                    freeze: false
-                } : Object.assign({ uid, uuid }, objectify(uidList)[uid])
+                // let uidTemp: PaimonUid = options.bind ? {
+                //     uuid,
+                //     uid,
+                //     cookie: undefined,
+                //     dsalt: UUID.randomUUID().unsign(),
+                //     freeze: false
+                // } : Object.assign({ uid, uuid }, objectify(uidList)[uid])
+                let _objUidTemp: PaimonUidObject = PaimonUid.objectify(__uidTemp)
 
                 if (options.bind) {
-                    sendMsg = `已绑定uid(${uid})${options.cookie ? '和Cookie' : ''}${__flag_frist ? '，由于是第一次绑定，该uid已被自动设置为默认uid' : ''}。`
+                    if (__flagNoneUid) {
+                        session.user.active_uid = uid
+                        //第一次绑定，创建一个PaimonUid对象
+                        _objUidTemp[uid] = {
+                            uuid,
+                            dsalt: UUID.randomUUID().unsign(),
+                            cookie: options.cookie,
+                            freeze: false
+                        }
+                    }
+                    sendMsg = `已绑定 uid(${uid})${options.cookie ? '和 cookie' : ''}${__flagNoneUid ? '，由于是第一次绑定，该 uid 已被自动设置为默认 uid' : ''}。`
                 } else if (options.remove) {
                     if (uid === session.user.active_uid) {
-                        await session.send(uidList.length === 1 ? '只绑定了这一个uid' : '这是一个默认uid' + '，确定移除？（回复句号以确认移除）')
+                        await session.send(__uidTemp.length === 1 ? '只绑定了这一个 uid' : '这是一个默认 uid' + '，确定移除？（回复句号以确认移除）')
                         const dot = await session.prompt(10 * 1000)
                         if (dot === '.' || dot === '。') {
-                            session.user.active_uid = uidList.length === 1 ? undefined : uidList.find(u => u.uid !== uid).uid.toString()
+                            session.user.active_uid = __uidTemp.length === 1 ? undefined : __uidTemp.find(u => u.uid !== uid).uid.toString()
                         } else {
                             return '等待超时。'
                         }
                     }
-                    const _i = uidList.findIndex(u => u.uid === uid)
-                    //delete array
-                    uidList.splice(_i, 1)
-                    sendMsg = `已移除uid(${uid})。`
+                    delete _objUidTemp[uid]
+                    sendMsg = `已移除 uid(${uid})`
                 } else if (options.device) {
-                    uidTemp['dsalt'] = UUID.randomUUID().unsign()
-                    sendMsg = `已重置uid(${uid})的虚拟设备信息。`
+                    _objUidTemp[uid].dsalt = UUID.randomUUID().unsign()
+                    sendMsg = `已重置 uid(${uid}) 的虚拟设备信息。`
                 } else if (options.default) {
                     if (uid === session.user.active_uid) {
-                        return '已经是默认uid了。'
+                        return '已经是默认 uid 了。'
                     }
                     session.user.active_uid = uid
-                    sendMsg = '已设置默认uid为' + uid
+                    sendMsg = '已设置默认 uid 为' + uid
                 }
 
                 if (options.cookie && session.subtype === 'private') {
@@ -140,18 +158,21 @@ export default class PaimonCommand {
                     if (typeof options.cookie === 'string') {
                         ck = options.cookie
                     } else {
-                        sendMsg = '想为该uid绑定Cookie？请回复Cookie以绑定'
+                        sendMsg = '想为该 uid 绑定 cookie ？请回复你的 cookie 以绑定'
                         ck = await session.prompt(30 * 1000)
                         if (!ck)
                             return '等待超时，已取消操作。'
                     }
-                    uidTemp['cookie'] = ck
-                    if (!options.bind) sendMsg = `已绑定Cookie到uid(${uid})。`
+                    _objUidTemp[uid].cookie = ck
+                    if (!options.bind) sendMsg = `已绑定cookie到uid(${uid})。`
+                } else if (options.cookie && session.subtype !== 'private') {
+                    return '您应该私聊发送 cookie ，您的 cookie 可能已经泄露 \n请立即访问 https://www.miyoushe.com 或 https://user.mihoyo.com 退出登录来刷新 cookie'
                 }
 
                 await session.send(sendMsg)
-                uidList.push(uidTemp)
-                __flag_frist = false
+                //将object变更更新到Array
+                __uidTemp = PaimonUid.parse(_objUidTemp)
+                __flagNoneUid = false
                 return await next()
             })
             .use(this.useLast(this.ctx))
@@ -162,9 +183,9 @@ export default class PaimonCommand {
             // .option('autosession', '-- [param]', { hidden: true })
             .action(async ({ session }, uid) => {
                 uid ??= session.user.active_uid
-                const cookie = objectify(this.uids)[uid as UID].cookie
+                const cookie = PaimonUid.objectify(this.uids)[uid as UID].cookie
                 if (!cookie) {
-                    return '您的uid还未绑定过cookie！请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以绑定'
+                    return '您的 uid 还未绑定过 cookie ！请私聊发送 `paimon.bind ' + uid + ' --cookie 你的cookie`以绑定'
                 }
 
                 const api = ctx.paimon.login(uid as UID, cookie)
@@ -181,11 +202,11 @@ export default class PaimonCommand {
                         await session.send('签到可能成功，但是无法获取奖励信息')
                         await session.send(`<figure><message userId="${session.selfId}">下列为接口返回的原始信息</message><message userId="${session.selfId}">${JSON.stringify(err.raw)}</message></figure>`)
                     } else if (err.code === -100) {
-                        await session.send('绑定的Cookie已失效!请私聊发送`paimon.bind ' + uid + ' --cookie 你的cookie`以重新绑定')
+                        await session.send('绑定的 cookie 已失效!请私聊发送`paimon.uid ' + uid + ' --cookie \'你的cookie\'`以重新绑定')
                     } else if (err.code === -5003) {
                         await session.send('你已经签到过了')
                     } else if (err.code === -375) {
-                        await session.send('签到未成功，需要验证码，可以发送 "paimon.bind --device" 重置设备信息后再试')
+                        await session.send('签到未成功，需要验证码，可以发送 "paimon.uid --device" 重置设备信息后再试')
                     } else {
                         logger.warn('fetch error:', err.raw)
                         await session.send('签到失败：' + err.message)
@@ -222,27 +243,43 @@ export default class PaimonCommand {
         return _t.length > 0
     }
 
+    /**
+     * 
+     * @param propmt 
+     * @param bindings 
+     * @param handleFn 
+     * @returns 1: invalid propmt | 0: timeout
+     */
+    private vertifyPropmt(propmt: string | undefined, bindings: string[], handleFn?: (propmt: string) => boolean) {
+        if (propmt) {
+            return (bindings.length === 0 && !handleFn) || (bindings.length > 0 && !bindings.includes(propmt)) || (handleFn && !handleFn(propmt)) ? 1 : propmt
+        } else {
+            return 0
+        }
+    }
+
     private async before(uid, session: Session) {
         const user = await session.observeUser(['active_uid', 'authority', 'characet_id', 'id', 'uuid'])
-        const uuid = this.database.createUUID(user.id.toString())
-        const uidList: PaimonUid[] = await this.ctx.database.get('paimon_uid', { uuid })
+        const uuid = user.uuid ?? (user.uuid = this.database.createUUID(user.id.toString()))
 
-        if (uid && uidList.findIndex(u => u.uid === uid as UID) < 0 && !this.incudeUid(uid as UID)) {
-            return '这不是你的uid'
-        } else if (uidList.length === 0) {
-            await session.send(uid ? '这个uid还没有绑定过，回复句号以绑定这个uid' : '你还没有绑定过uid，回复uid以绑定第一个uid')
+        this.master = user.authority >= this.config.master
+        this.uids = await this.ctx.database.get('paimon_uid', { uuid })
+
+        if (uid && this.uids.findIndex(u => u.uid === uid as UID) < 0 && !this.incudeUid(uid as UID)) {
+            return '这不是你的 uid'
+        } else if (this.uids.length === 0) {
+            await session.send(uid ? '这个 uid 还没有绑定过，回复句号以绑定这个 uid' : '你还没有绑定过 uid ，回复 uid 以绑定第一个 uid')
             const promptMsg = await session.prompt(10 * 1000)
             if (promptMsg === '.' || promptMsg === '。') {
                 return session.execute(`paimon.uid ${uid} --bind`)
-            } else if (vertifyUid(promptMsg)) {
+            } else if (PaimonUid.vertify(promptMsg)) {
                 return session.execute(`paimon.uid ${promptMsg} --bind`)
             } else {
-                return '等待超时。'
+                return '这不是句号或 uid ，或等待超时'
             }
         }
 
-        this.master = user.authority >= this.config.master
-        this.uids = uidList
+
     }
 
     private useLast(ctx: Context) {
@@ -250,7 +287,8 @@ export default class PaimonCommand {
         return (cmd: Command) => cmd.action(async ({ next }) => {
             await next()
             console.log('last: update database.')
-            return await _db.upsert('paimon_uid', this.uids, 'uid')
+            __uidTemp = []
+            return await _db.upsert('paimon_uid', __uidTemp)
         })
     }
 }
