@@ -22,10 +22,39 @@ export interface PaimonUid {
     freeze: boolean
 }
 
+export type PaimonUidObject = {
+    [K in PaimonUid['uid'] as string]: {
+        [K in keyof PaimonUid as K extends 'uid' ? never : K]: PaimonUid[K]
+    }
+}
+
 export namespace PaimonUid {
     export type Field = keyof PaimonUid
     export const fields: Field[] = []
     export type Observed<K extends Field = Field> = utils.Observed<Pick<PaimonUid, K>, Promise<void>>
+
+    export function objectify(uids: PaimonUid[]): PaimonUidObject {
+        return Object.fromEntries(uids.map(uidObj => {
+            const K = uidObj.uid
+            delete uidObj.uid
+            // delete uidObj.uuid
+            return [K, uidObj]
+        }))
+    }
+
+    export function parse(uidObject: PaimonUidObject): PaimonUid[] {
+        return Object.keys(uidObject).map(uid => {
+            return Object.assign({ uid: uid as UID }, uidObject[uid])
+        })
+    }
+
+    export function uidArray(uids: PaimonUid[]): UID[] {
+        return uids.map(o => o.uid)
+    }
+
+    export function vertify(uid: string) {
+        return /[0-9]/g.test(uid.toString())
+    }
 }
 
 export interface PaimonCharacter {
