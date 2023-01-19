@@ -1,15 +1,8 @@
-<div align="center" style="margin-top: 1rem;">
-  <a target="_blank">
-      <img width="160" src="https://github.com/Lipraty/koishi-plugin-paimon/wiki/assets/logo.svg" alt="logo">
-  </a>
-
 # koishi-plugin-paimon
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-paimon?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-paimon)
 
-A [koishi](https://github.com/koishijs/koishi) plugin for a certain anime game.
-
-</div>
+> 这是一个已经停止更新的插件，所有功能将转移至 Koishi 官方插件： [koishi-plugin-genshin](https://github.com/koishijs/koishi-plugin-genshin)。敬请期待适用于 Koishi v4 的 Genshin 插件吧！
 
 ## 安装
 

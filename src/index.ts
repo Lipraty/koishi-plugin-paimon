@@ -32,7 +32,7 @@ class Paimon extends Service {
 
     /**
      * 创建原始GenshinAPI
-     * @param uid 
+     * @param uid  
      * @param cookie 
      */
     static create(uid: UID, cookie?: string): GenshinAPI {

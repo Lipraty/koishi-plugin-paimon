@@ -2,7 +2,7 @@
   "name": "koishi-plugin-paimon",
   "description": "A koishi plugin for a certain anime game.",
   "private": false,
-  "version": "0.2.1-alpha.1",
+  "version": "0.2.2-preview.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "repository": "https://github.com/Lipraty/koishi-plugin-paimon",
@@ -31,7 +31,7 @@
   ],
   "koishi": {
     "description": {
-      "zh": "用于Koishi的某动漫游戏插件"
+      "zh": "派蒙！最好的<del>应急食品</del>伙伴！（开发中的插件，功能不完整，欢迎issue提出bug）"
     },
     "preview": true,
     "service": {
@@ -51,7 +51,6 @@
   "dependencies": {
     "axios": "^1.2.2",
     "lodash.isequal": "^4.5.0",
-    "reflect-metadata": "^0.1.13",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
